@@ -237,9 +237,29 @@ Book-parser obsługuje szeroki zakres formatów dokumentów:
   - Monitorowanie postępów
   - Retry logic dla nieudanych zadań
   - Dynamiczne skalowanie priorytetów
-  - ### 📦 Output końcowy
 
-> **Na koniec w katalogu `/finish` będzie poskładana książka w formacie `.doc` z wykorzystaniem [oOfficeAI OfficeCli](https://github.com/iOfficeAI/OfficeCli).**
+### Krok 8: Generowanie finalnego dokumentu .doc z OfficeCli
+- **Integracja z [OfficeCli](https://github.com/iOfficeAI/OfficeCli)**:
+  - Wywołanie z poziomu shell: `officecli generate --input /workspace/chunks --output /workspace/finish/book.doc`
+  - AI-powered składanie chunków w spójny dokument
+  - Zachowanie formatowania i struktury oryginalnej książki
+  - Automatyczne generowanie spisu treści
+  - Wsparcie dla metadanych (autor, tytuł, data)
+
+---
+
+### 📦 Output końcowy
+
+> **Na koniec w katalogu `/finish` będzie poskładana książka w formacie `.doc` z wykorzystaniem [iOfficeAI OfficeCli](https://github.com/iOfficeAI/OfficeCli).**
+> 
+> Przykładowe wywołanie z shell:
+> ```bash
+> officecli generate \
+>   --input /workspace/chunks \
+>   --output /workspace/finish/book.doc \
+>   --format doc \
+>   --ai-compose
+> ```
 
 ---
 
@@ -379,8 +399,9 @@ book-parser/
 │   └── book_parser_workflow.json
 ├── input/                  # Katalog wejściowy (przykłady)
 ├── output/                 # Katalog wyjściowy (generowane)
-|-- chunks/
-|-- finish/
+├── chunks/                 # Pliki chunków (.json, .txt)
+├── finish/                 # Finalny dokument .doc wygenerowany przez OfficeCli
+│   └── book.doc            # Gotowa książka w formacie .doc
 ├── logs/                   # Logi aplikacji
 ├── docs/                   # Dodatkowa dokumentacja
 ├── tests/                  # Testy jednostkowe
