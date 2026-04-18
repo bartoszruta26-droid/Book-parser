@@ -1,18 +1,10 @@
 #!/bin/bash
-
-# Pipeline przetwarzania dokumentów i wysyłki do mempalace
-# Autor: Book-Parser Project
-# Wymagania: chunker, mempalace_client, curl
+# Skrypt uruchamiający pipeline z ekspansją treści przez Ollama LLM
 
 set -e
 
-# Konfiguracja
-INPUT_DIR="${INPUT_DIR:-./input}"
-CHUNK_DIR="${CHUNK_DIR:-./chunk}"
-LOGS_DIR="${LOGS_DIR:-./logs}"
-MEMPALACE_HOST="${MEMPALACE_HOST:-localhost}"
-MEMPALACE_PORT="${MEMPALACE_PORT:-8080}"
-VERBOSE="${VERBOSE:-false}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
 # Kolory dla outputu
 RED='\033[0;31m'
@@ -21,269 +13,324 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
+# Wartości domyślne
+INPUT_DIR="./input"
+CHUNK_DIR="./chunk"
+OUTPUT_DIR="./output"
+MODEL="qwen2.5-coder:7b"
+STYLE="technical"
+LENGTH="medium"
+LANGUAGE="pl"
+MAX_CHUNKS=5
+EXPAND=false
+CHECK_OLLAMA=false
 
-log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-print_header() {
-    echo "========================================"
-    echo "  Book-Parser Pipeline"
-    echo "  Integracja z Mempalace"
-    echo "========================================"
+print_help() {
+    echo "=== Pipeline z Ekspansją Treści przez Ollama ==="
     echo ""
-}
-
-show_help() {
     echo "Użycie: $0 [opcje]"
     echo ""
     echo "Opcje:"
-    echo "  -i, --input DIR       Katalog wejściowy z dokumentami (domyślnie: ./input)"
-    echo "  -o, --output DIR      Katalog wyjściowy dla chunków (domyślnie: ./chunk)"
-    echo "  -l, --logs DIR        Katalog logów (domyślnie: ./logs)"
-    echo "  -H, --host HOST       Host mempalace (domyślnie: localhost)"
-    echo "  -p, --port PORT       Port mempalace (domyślnie: 8080)"
-    echo "  -c, --clean           Wyczyść katalog chunków przed rozpoczęciem"
-    echo "  -s, --skip-upload     Tylko chunkowanie, bez wysyłki do mempalace"
-    echo "  -w, --wait SEC        Czas oczekiwania między retry (sekundy, domyślnie: 5)"
-    echo "  -v, --verbose         Tryb szczegółowy"
-    echo "  -h, --help            Wyświetl tę pomoc"
-    echo ""
-    echo "Zmienne środowiskowe:"
-    echo "  INPUT_DIR             Katalog wejściowy"
-    echo "  CHUNK_DIR             Katalog wyjściowy dla chunków"
-    echo "  LOGS_DIR              Katalog logów"
-    echo "  MEMPALACE_HOST        Host mempalace"
-    echo "  MEMPALACE_PORT        Port mempalace"
-    echo "  VERBOSE               Tryb szczegółowy (true/false)"
+    echo "  -i, --input DIR       Katalog z dokumentami wejściowymi (domyślnie: ./input)"
+    echo "  -c, --chunk-dir DIR   Katalog na chunki (domyślnie: ./chunk)"
+    echo "  -o, --output DIR      Katalog wyjściowy (domyślnie: ./output)"
+    echo "  -m, --model MODEL     Model Ollama (domyślnie: qwen2.5-coder:7b)"
+    echo "  -s, --style STYLE     Styl: academic, journalistic, technical, creative, business, casual"
+    echo "  -l, --length LENGTH   Długość: short, medium, long, very_long"
+    echo "  --lang LANGUAGE       Język outputu (domyślnie: pl)"
+    echo "  -n, --max-chunks N    Maksymalna liczba chunków do ekspansji (domyślnie: 5)"
+    echo "  -e, --expand          Włącz ekspansję treści przez LLM"
+    echo "  --check               Sprawdź dostępność Ollama i zakończ"
+    echo "  -h, --help            Wyświetl pomoc"
     echo ""
     echo "Przykłady:"
-    echo "  $0 -i ./input -o ./chunk -H localhost -p 8080"
-    echo "  $0 --clean --verbose"
-    echo "  MEMPALACE_HOST=192.168.1.100 $0 --skip-upload"
-}
-
-check_dependencies() {
-    log_info "Sprawdzanie zależności..."
-    
-    local missing=0
-    
-    if ! command -v ./chunker &> /dev/null; then
-        log_error "Brak chunker. Uruchom 'make chunker'"
-        missing=1
-    fi
-    
-    if ! command -v ./mempalace_client &> /dev/null; then
-        log_error "Brak mempalace_client. Uruchom 'make mempalace'"
-        missing=1
-    fi
-    
-    if [ $missing -eq 1 ]; then
-        log_error "Brakuje zależności. Skompiluj projekt poleceniem 'make all'"
-        exit 1
-    fi
-    
-    log_success "Wszystkie zależności dostępne"
-}
-
-wait_for_mempalace() {
-    local max_retries=${1:-10}
-    local wait_time=${2:-5}
-    
-    log_info "Oczekiwanie na dostępność mempalace (${max_retries} prób, ${wait_time}s między próbami)..."
-    
-    for i in $(seq 1 $max_retries); do
-        if curl -s -o /dev/null -w "%{http_code}" "http://${MEMPALACE_HOST}:${MEMPALACE_PORT}/api/v1/health" | grep -q "200"; then
-            log_success "mempalace dostępny na ${MEMPALACE_HOST}:${MEMPALACE_PORT}"
-            return 0
-        fi
-        
-        log_warning "Próba $i/$max_retries nieudana, czekam ${wait_time}s..."
-        sleep $wait_time
-    done
-    
-    log_error "mempalace nie jest dostępny po $max_retries próbach"
-    return 1
-}
-
-run_chunking() {
-    log_info "Rozpoczynanie procesu chunkowania..."
-    log_info "Katalog wejściowy: $INPUT_DIR"
-    log_info "Katalog wyjściowy: $CHUNK_DIR"
-    
-    local chunker_args="-i $INPUT_DIR -o $CHUNK_DIR -l $LOGS_DIR"
-    
-    if [ "$VERBOSE" = "true" ]; then
-        chunker_args="$chunker_args -v"
-    fi
-    
-    log_info "Uruchamianie chunkera: ./chunker $chunker_args"
-    
-    if ./chunker $chunker_args; then
-        log_success "Chunkowanie zakończone pomyślnie"
-        return 0
-    else
-        log_error "Błąd podczas chunkowania"
-        return 1
-    fi
-}
-
-run_upload() {
-    log_info "Rozpoczynanie wysyłki chunków do mempalace..."
-    log_info "Host: $MEMPALACE_HOST:$MEMPALACE_PORT"
-    log_info "Katalog chunków: $CHUNK_DIR"
-    
-    local upload_args="-i $CHUNK_DIR -H $MEMPALACE_HOST -p $MEMPALACE_PORT"
-    
-    if [ "$VERBOSE" = "true" ]; then
-        upload_args="$upload_args -v"
-    fi
-    
-    log_info "Uruchamianie mempalace_client: ./mempalace_client $upload_args"
-    
-    if ./mempalace_client $upload_args; then
-        log_success "Wysyłka chunków zakończona pomyślnie"
-        return 0
-    else
-        log_error "Błąd podczas wysyłki chunków"
-        return 1
-    fi
-}
-
-count_chunks() {
-    local count=$(find "$CHUNK_DIR" -name "*.json" -type f 2>/dev/null | wc -l)
-    echo $count
+    echo "  $0 --check"
+    echo "  $0 -i ./input -e -s creative -l long"
+    echo "  $0 -e -m llama3.2 --lang en"
 }
 
 # Parsowanie argumentów
-CLEAN=false
-SKIP_UPLOAD=false
-WAIT_TIME=5
-
 while [[ $# -gt 0 ]]; do
     case $1 in
         -i|--input)
             INPUT_DIR="$2"
             shift 2
             ;;
-        -o|--output)
+        -c|--chunk-dir)
             CHUNK_DIR="$2"
             shift 2
             ;;
-        -l|--logs)
-            LOGS_DIR="$2"
+        -o|--output)
+            OUTPUT_DIR="$2"
             shift 2
             ;;
-        -H|--host)
-            MEMPALACE_HOST="$2"
+        -m|--model)
+            MODEL="$2"
             shift 2
             ;;
-        -p|--port)
-            MEMPALACE_PORT="$2"
+        -s|--style)
+            STYLE="$2"
             shift 2
             ;;
-        -w|--wait)
-            WAIT_TIME="$2"
+        -l|--length)
+            LENGTH="$2"
             shift 2
             ;;
-        -c|--clean)
-            CLEAN=true
+        --lang)
+            LANGUAGE="$2"
+            shift 2
+            ;;
+        -n|--max-chunks)
+            MAX_CHUNKS="$2"
+            shift 2
+            ;;
+        -e|--expand)
+            EXPAND=true
             shift
             ;;
-        -s|--skip-upload)
-            SKIP_UPLOAD=true
-            shift
-            ;;
-        -v|--verbose)
-            VERBOSE=true
+        --check)
+            CHECK_OLLAMA=true
             shift
             ;;
         -h|--help)
-            show_help
+            print_help
             exit 0
             ;;
         *)
-            log_error "Nieznana opcja: $1"
-            show_help
+            echo -e "${RED}Nieznana opcja: $1${NC}"
+            print_help
             exit 1
             ;;
     esac
 done
 
-# Główny przepływ pracy
-main() {
-    print_header
+echo -e "${BLUE}========================================${NC}"
+echo -e "${BLUE}  Pipeline z Ekspansją Treści Ollama   ${NC}"
+echo -e "${BLUE}========================================${NC}"
+echo ""
+
+# Sprawdzenie dostępności Ollama
+check_ollama() {
+    echo -e "${YELLOW}Sprawdzanie dostępności Ollama...${NC}"
     
-    # Sprawdzenie zależności
-    check_dependencies
-    
-    # Tworzenie katalogów
-    mkdir -p "$CHUNK_DIR" "$LOGS_DIR"
-    
-    # Czyszczenie jeśli wymagane
-    if [ "$CLEAN" = "true" ]; then
-        log_info "Czyszczenie katalogu chunków..."
-        rm -rf "$CHUNK_DIR"/*
-        log_success "Katalog wyczyszczony"
+    if command -v curl &> /dev/null; then
+        RESPONSE=$(curl -s -w "%{http_code}" -o /tmp/ollama_response.json http://localhost:11434/api/tags 2>/dev/null || echo "000")
+        
+        if [[ "$RESPONSE" == "200" ]]; then
+            echo -e "${GREEN}✓ Ollama jest dostępne!${NC}"
+            
+            # Pobierz listę modeli
+            MODELS=$(cat /tmp/ollama_response.json | grep -o '"name":"[^"]*"' | cut -d'"' -f4 || echo "")
+            
+            if [[ -n "$MODELS" ]]; then
+                echo -e "${GREEN}Dostępne modele:${NC}"
+                echo "$MODELS" | while read model; do
+                    if [[ "$model" == *"$MODEL"* ]] || [[ "$MODEL" == *"$model"* ]]; then
+                        echo -e "  ${GREEN}✓ $model${NC}"
+                    else
+                        echo "  - $model"
+                    fi
+                done
+            else
+                echo -e "${YELLOW}Brak zainstalowanych modeli${NC}"
+            fi
+            
+            return 0
+        else
+            echo -e "${RED}✗ Ollama nie odpowiada na porcie 11434${NC}"
+            return 1
+        fi
+    else
+        echo -e "${RED}✗ curl nie jest zainstalowany${NC}"
+        return 1
     fi
+}
+
+# Tryb sprawdzania
+if [[ "$CHECK_OLLAMA" == true ]]; then
+    check_ollama
+    exit $?
+fi
+
+# Tworzenie katalogów
+echo -e "${YELLOW}Przygotowanie katalogów...${NC}"
+mkdir -p "$CHUNK_DIR" "$OUTPUT_DIR"
+
+# Kompilacja narzędzi
+echo -e "${YELLOW}Kompilacja narzędzi...${NC}"
+make all > /dev/null 2>&1 || {
+    echo -e "${RED}Błąd kompilacji!${NC}"
+    exit 1
+}
+echo -e "${GREEN}✓ Narzędzia skompilowane${NC}"
+echo ""
+
+# Krok 1: Chunking dokumentów
+echo -e "${BLUE}=== KROK 1: Chunking dokumentów ===${NC}"
+
+if [[ ! -d "$INPUT_DIR" ]] || [[ -z "$(ls -A "$INPUT_DIR" 2>/dev/null)" ]]; then
+    echo -e "${YELLOW}Katalog input jest pusty. Tworzę przykładowy dokument...${NC}"
+    mkdir -p "$INPUT_DIR"
+    cat > "$INPUT_DIR/sample_document.txt" << 'EOF'
+# Wprowadzenie do Sztucznej Inteligencji
+
+## Historia AI
+
+Sztuczna inteligencja to dziedzina nauki zajmująca się tworzeniem systemów komputerowych zdolnych do wykonywania zadań wymagających ludzkiej inteligencji. Pierwsze koncepcje AI pojawiły się już w starożytności, ale正式ne narodziny tej dziedziny przypadają na lata 50. XX wieku.
+
+### Wczesne lata
+
+W 1950 roku Alan Turing opublikował przełomowy artykuł "Computing Machinery and Intelligence", w którym zaproponował test Turinga jako miarę inteligencji maszyny. To właśnie Turing zasugerował pytanie: "Czy maszyny mogą myśleć?"
+
+### Narodziny terminu
+
+Termin "sztuczna inteligencja" został coined w 1956 roku podczas konferencji w Dartmouth, zorganizowanej przez Johna McCarthy'ego, Marvina Minsky'ego, Nathaniela Rochestera i Claude'a Shannona.
+
+## Główne podejścia
+
+### AI Symboliczne
+
+Podejście symboliczne, zwane też GOFAI (Good Old-Fashioned AI), zakładało reprezentację wiedzy za pomocą symboli i reguł logicznych. Systemy eksperckie lat 70. i 80. były przykładem tego podejścia.
+
+### Uczenie Maszynowe
+
+Uczenie maszynowe to podejście statystyczne, gdzie systemy uczą się na podstawie danych zamiast być programowane explicite. Deep learning, czyli uczenie głębokie, jest podzbiorem uczenia maszynowego wykorzystującym sieci neuronowe.
+
+## Zastosowania współczesne
+
+### Przetwarzanie Języka Naturalnego
+
+Modele językowe takie jak GPT, BERT czy Qwen revolucionizują sposób interakcji człowiek-komputer. Chatboty, tłumaczenia automatyczne i analiza sentymentu to tylko niektóre zastosowania.
+
+### Wizja Komputerowa
+
+Systemy rozpoznawania obrazów znajdują zastosowanie w medycynie, motoryzacji (samochody autonomiczne), bezpieczeństwie i rozrywce.
+
+### Robotyka
+
+AI umożliwia robotom adaptację do nowych środowisk i zadań, od robotów przemysłowych po humanoidy.
+
+## Wyzwania i przyszłość
+
+### Wyzwania etyczne
+
+Rozwój AI rodzi pytania o prywatność, bias w algorytmach, wpływ na rynek pracy i autonomię systemów decyzyjnych.
+
+### Przyszłość
+
+Eksperci przewidują dalszy rozwój AGI (Artificial General Intelligence), bardziej zaawansowanych interfejsów mózg-komputer oraz integracji AI z codziennością.
+EOF
+    echo -e "${GREEN}✓ Utworzono przykładowy dokument${NC}"
+fi
+
+echo -e "${YELLOW}Uruchamianie chunkera...${NC}"
+./chunker -i "$INPUT_DIR" -o "$CHUNK_DIR" -v
+
+CHUNK_COUNT=$(ls -1 "$CHUNK_DIR"/*.json 2>/dev/null | wc -l)
+echo -e "${GREEN}✓ Utworzono $CHUNK_COUNT chunków${NC}"
+echo ""
+
+# Krok 2: Wysyłka do Mempalace (opcjonalna)
+echo -e "${BLUE}=== KROK 2: Integracja z Mempalace (opcjonalna) ===${NC}"
+echo -e "${YELLOW}Sprawdzanie dostępności mempalace...${NC}"
+
+if ./mempalace_client --check 2>/dev/null; then
+    echo -e "${GREEN}✓ Mempalace dostępne, wysyłanie chunków...${NC}"
+    ./mempalace_client -i "$CHUNK_DIR" 2>&1 | tail -5
+else
+    echo -e "${YELLOW}⊘ Mempalace niedostępne - pomijam ten krok${NC}"
+fi
+echo ""
+
+# Krok 3: Ekspansja treści przez LLM
+if [[ "$EXPAND" == true ]]; then
+    echo -e "${BLUE}=== KROK 3: Ekspansja treści przez LLM ===${NC}"
     
-    # Liczenie plików wejściowych
-    local input_count=$(find "$INPUT_DIR" -type f \( -name "*.txt" -o -name "*.md" -o -name "*.json" -o -name "*.pdf" -o -name "*.doc" -o -name "*.docx" \) 2>/dev/null | wc -l)
-    log_info "Znaleziono $input_count plików do przetworzenia w $INPUT_DIR"
-    
-    if [ "$input_count" -eq 0 ]; then
-        log_warning "Brak plików do przetworzenia"
-        exit 0
-    fi
-    
-    # Chunkowanie
-    if ! run_chunking; then
-        log_error "Proces chunkowania nie powiódł się"
+    # Sprawdź Ollama
+    if ! check_ollama; then
+        echo -e "${RED}✗ Ollama nie jest dostępne!${NC}"
+        echo -e "${YELLOW}Uruchom Ollama poleceniem: ollama serve${NC}"
+        echo -e "${YELLOW}Następnie pobierz model: ollama pull $MODEL${NC}"
         exit 1
     fi
     
-    # Liczenie utworzonych chunków
-    local chunk_count=$(count_chunks)
-    log_success "Utworzono $chunk_count chunków"
-    
-    # Wysyłka do mempalace (jeśli nie pominięto)
-    if [ "$SKIP_UPLOAD" = "false" ]; then
-        if wait_for_mempalace 10 $WAIT_TIME; then
-            if ! run_upload; then
-                log_error "Proces wysyłki nie powiódł się"
-                exit 1
-            fi
+    # Sprawdź czy model jest dostępny
+    if ! curl -s http://localhost:11434/api/tags | grep -q "\"name\":\"$MODEL\""; then
+        echo -e "${YELLOW}Model '$MODEL' nie jest dostępny. Pobieranie...${NC}"
+        echo -e "${YELLOW}To może potrwać kilka minut w zależności od rozmiaru modelu.${NC}"
+        
+        if command -v ollama &> /dev/null; then
+            ollama pull "$MODEL"
         else
-            log_warning "mempalace niedostępny - pomijam wysyłkę"
-            log_info "Możesz uruchomić wysyłkę później: ./mempalace_client -i $CHUNK_DIR -H $MEMPALACE_HOST -p $MEMPALACE_PORT"
+            echo -e "${RED}✗ Klient ollama nie jest zainstalowany${NC}"
+            echo -e "${YELLOW}Możesz kontynuować bez ekspansji lub zainstalować Ollama${NC}"
+            EXPAND=false
         fi
     fi
     
-    echo ""
-    log_success "=== Pipeline zakończony pomyślnie ==="
-    echo ""
-    echo "Podsumowanie:"
-    echo "  - Przetworzono plików: $input_count"
-    echo "  - Utworzono chunków: $chunk_count"
-    echo "  - Katalog chunków: $CHUNK_DIR"
-    echo "  - Logi: $LOGS_DIR"
-    
-    if [ "$SKIP_UPLOAD" = "false" ]; then
-        echo "  - Mempalace: $MEMPALACE_HOST:$MEMPALACE_PORT"
+    if [[ "$EXPAND" == true ]]; then
+        echo -e "${YELLOW}Uruchamianie ekspandera treści...${NC}"
+        echo -e "  Model: ${GREEN}$MODEL${NC}"
+        echo -e "  Styl: ${GREEN}$STYLE${NC}"
+        echo -e "  Długość: ${GREEN}$LENGTH${NC}"
+        echo -e "  Język: ${GREEN}$LANGUAGE${NC}"
+        echo -e "  Max chunków: ${GREEN}$MAX_CHUNKS${NC}"
+        echo ""
+        
+        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+        EXPANDED_OUTPUT="$OUTPUT_DIR/expanded_${TIMESTAMP}.json"
+        TEXT_OUTPUT="$OUTPUT_DIR/expanded_${TIMESTAMP}.txt"
+        
+        # Ekspansja z wybranymi parametrami
+        ./ollama_expander \
+            -i "$CHUNK_DIR" \
+            -o "$EXPANDED_OUTPUT" \
+            -m "$MODEL" \
+            -s "$STYLE" \
+            -l "$LENGTH" \
+            --lang "$LANGUAGE" \
+            --max-chunks "$MAX_CHUNKS" \
+            -v
+        
+        # Konwersja do formatu tekstowego
+        ./ollama_expander \
+            -i "$CHUNK_DIR" \
+            -o "$TEXT_OUTPUT" \
+            -t \
+            -m "$MODEL" \
+            -s "$STYLE" \
+            -l "$LENGTH" \
+            --lang "$LANGUAGE" \
+            --max-chunks "$MAX_CHUNKS" \
+            2>/dev/null
+        
+        echo ""
+        echo -e "${GREEN}✓ Ekspansja zakończona sukcesem!${NC}"
+        echo -e "${YELLOW}Wyniki zapisano w:${NC}"
+        echo -e "  JSON: $EXPANDED_OUTPUT"
+        echo -e "  TXT:  $TEXT_OUTPUT"
     fi
-    
-    echo ""
-}
+else
+    echo -e "${BLUE}=== KROK 3: Pominięto ekspansję ===${NC}"
+    echo -e "${YELLOW}Użyj flagi -e lub --expand aby włączyć ekspansję przez LLM${NC}"
+fi
 
-main
+echo ""
+echo -e "${BLUE}========================================${NC}"
+echo -e "${GREEN}  Pipeline zakończone sukcesnie!       ${NC}"
+echo -e "${BLUE}========================================${NC}"
+echo ""
+echo -e "${YELLOW}Podsumowanie:${NC}"
+echo -e "  Dokumenty wejściowe: $INPUT_DIR"
+echo -e "  Chunki: $CHUNK_DIR ($CHUNK_COUNT plików)"
+echo -e "  Output: $OUTPUT_DIR"
+
+if [[ "$EXPAND" == true ]]; then
+    echo -e "  Expander: ${GREEN}aktywny${NC} (model: $MODEL)"
+fi
+
+echo ""
+echo -e "${YELLOW}Następne kroki:${NC}"
+echo -e "  1. Przeglądaj wyniki w katalogu $OUTPUT_DIR"
+echo -e "  2. Uruchom ponownie z innymi parametrami stylu/długości"
+echo -e "  3. Skonfiguruj mempalace dla trwałego przechowywania chunków"

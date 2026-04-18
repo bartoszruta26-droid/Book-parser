@@ -668,3 +668,84 @@ Made with ❤️ on Raspberry Pi 4
 
 
 </div>
+
+---
+
+## 🆕 Ollama Content Expander
+
+Nowy moduł systemu wykorzystujący lokalny LLM przez Ollama do generowania rozszerzonych, spójnych treści na podstawie przetworzonych chunków.
+
+### Funkcje
+
+- **Lokalne LLM**: Integracja z Ollama API (wsparcie dla Qwen Coder, Llama 3.2, i innych)
+- **Wielowątkowa ekspansja**: Łączenie informacji z wielu chunków w spójną całość
+- **Dostosowanie stylu**: 6 predefiniowanych stylów (akademicki, dziennikarski, techniczny, kreatywny, biznesowy, nieformalny)
+- **Kontrola długości**: 4 poziomy długości outputu (~250 do ~2000+ słów)
+- **Wsparcie wielojęzyczne**: Output w dowolnym języku obsługiwanym przez model
+- **Formaty wyjściowe**: JSON (z metadanymi) lub plain text
+
+### Budowa
+
+```bash
+make expander
+```
+
+### Użycie
+
+```bash
+# Podstawowe
+./ollama_expander -i ./chunk/ -o expanded.json
+
+# Z wybranym modelem i stylem
+./ollama_expander -i ./chunk/ -o output.txt -t -m llama3.2 -s creative -l long --lang en
+
+# Sprawdzenie dostępności Ollama
+./ollama_expander --check
+
+# Lista dostępnych modeli
+./ollama_expander --list-models
+```
+
+### Opcje
+
+| Opcja | Opis | Domyślnie |
+|-------|------|-----------|
+| `-i, --input PATH` | Ścieżka do pliku/katalogu z chunkami | `./chunk` |
+| `-o, --output PATH` | Ścieżka wyjściowa | `./output/expanded.json` |
+| `-t, --text` | Zapis jako plain text zamiast JSON | false |
+| `-m, --model MODEL` | Model Ollama | `qwen2.5-coder:7b` |
+| `-s, --style STYLE` | Styl: academic/journalistic/technical/creative/business/casual | `technical` |
+| `-l, --length LENGTH` | Długość: short/medium/long/very_long | `medium` |
+| `--lang LANGUAGE` | Język outputu | `pl` |
+| `--temp VALUE` | Temperatura (0.0-2.0) | `0.7` |
+| `--max-chunks N` | Maksymalna liczba chunków | `10` |
+
+### Przykłady
+
+```bash
+# Ekspansja w stylu akademickim po polsku
+./ollama_expander -i ./chunk/ -s academic -l long --lang pl
+
+# Ekspansja w stylu dziennikarskim po angielsku
+./ollama_expander -i ./chunk/ -s journalistic --lang en -m llama3.2
+
+# Krótka notatka techniczna
+./ollama_expander -i ./chunk/sample_chunk_0.json -l short -s technical
+```
+
+### Pipeline z ekspansją
+
+```bash
+# Uruchomienie pełnego pipeline z ekspansją
+./run_pipeline.sh -e -s creative -l long
+
+# Z innym modelem
+./run_pipeline.sh -e -m llama3.2 --lang en
+```
+
+### Wymagania
+
+- Uruchomiona usługa Ollama: `ollama serve`
+- Pobrany model: `ollama pull qwen2.5-coder:7b`
+- Biblioteki: libcurl4-openssl-dev, nlohmann-json3-dev
+
