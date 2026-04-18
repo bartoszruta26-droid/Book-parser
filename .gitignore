@@ -1,7 +1,1 @@
-```
-# Processed chunks and temporary files
-chunk/.processed_*
-chunk/large_document_chunk_*.json
-chunk/large_document_chunk_*.txt
-*.tmp
-```
+Nothing needs to be added to .gitignore since only a README.md file was modified and there are no build artifacts, dependencies, or temporary files in the changes.
