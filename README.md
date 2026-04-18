@@ -237,6 +237,9 @@ Book-parser obsługuje szeroki zakres formatów dokumentów:
   - Monitorowanie postępów
   - Retry logic dla nieudanych zadań
   - Dynamiczne skalowanie priorytetów
+  - ### 📦 Output końcowy
+
+> **Na koniec w katalogu `/finish` będzie poskładana książka w formacie `.doc` z wykorzystaniem [oOfficeAI OfficeCli](https://github.com/iOfficeAI/OfficeCli).**
 
 ---
 
@@ -376,6 +379,8 @@ book-parser/
 │   └── book_parser_workflow.json
 ├── input/                  # Katalog wejściowy (przykłady)
 ├── output/                 # Katalog wyjściowy (generowane)
+|-- chunks/
+|-- finish/
 ├── logs/                   # Logi aplikacji
 ├── docs/                   # Dodatkowa dokumentacja
 ├── tests/                  # Testy jednostkowe
@@ -562,8 +567,6 @@ Made with ❤️ on Raspberry Pi 4
 
 ---
 
-### 📦 Output końcowy
 
-> **Na koniec w katalogu `/finish` będzie poskładana książka w formacie `.doc` z wykorzystaniem [oOfficeAI OfficeCli](https://github.com/iOfficeAI/OfficeCli).**
 
 </div>
