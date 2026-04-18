@@ -322,7 +322,61 @@ cd openclaw
 # ... dalsza konfiguracja
 ```
 
-### 8. Edycja pliku konfiguracyjnego
+### 8. Instalacja i konfiguracja OfficeCli
+**OfficeCli** to zaawansowane narzędzie AI do generowania i manipulacji dokumentami biurowymi z linii poleceń.
+
+#### Instalacja OfficeCli
+```bash
+# Klonowanie repozytorium OfficeCli
+git clone https://github.com/iOfficeAI/OfficeCli.git
+cd OfficeCli
+
+# Instalacja zależności
+pip install -r requirements.txt
+
+# Instalacja narzędzia
+sudo make install
+
+# Weryfikacja instalacji
+officecli --version
+```
+
+#### Konfiguracja OfficeCli
+```bash
+# Tworzenie pliku konfiguracyjnego
+officecli config init
+
+# Konfiguracja modelu AI (opcjonalne)
+officecli config set ai-model qwen-coder
+officecli config set ai-endpoint http://localhost:11434
+
+# Ustawienie domyślnego formatu wyjściowego
+officecli config set default-format doc
+```
+
+#### Przykłady użycia
+```bash
+# Generowanie dokumentu .doc z chunków
+officecli generate \
+  --input /workspace/chunks \
+  --output /workspace/finish/book.doc \
+  --format doc \
+  --ai-compose
+
+# Generowanie z konkretnym modelem AI
+officecli generate \
+  --input /workspace/chunks \
+  --output /workspace/finish/book.doc \
+  --ai-model qwen-coder \
+  --ai-compose
+
+# Podgląd dostępnych opcji
+officecli generate --help
+```
+
+> **Więcej informacji**: [Oficjalna dokumentacja OfficeCli](https://github.com/iOfficeAI/OfficeCli)
+
+### 9. Edycja pliku konfiguracyjnego
 ```bash
 cp config.example.json config.json
 nano config.json
@@ -443,6 +497,29 @@ book-parser/
   - Intelligent retry logic
   - Error handling
   - Performance optimization
+
+### OfficeCli
+- **Repozytorium**: [github.com/iOfficeAI/OfficeCli](https://github.com/iOfficeAI/OfficeCli)
+- **Rola**: AI-powered generowanie i manipulacja dokumentami biurowymi z linii poleceń
+- **Zastosowanie w book-parser**:
+  - Finalne składanie chunków w spójny dokument `.doc`
+  - Automatyczne generowanie spisu treści
+  - Zachowanie formatowania i struktury książki
+  - Wsparcie dla metadanych (autor, tytuł, data, ISBN)
+- **Integracja z shell**:
+  ```bash
+  officecli generate \
+    --input /workspace/chunks \
+    --output /workspace/finish/book.doc \
+    --format doc \
+    --ai-compose
+  ```
+- **Features**:
+  - AI-powered composition z wykorzystaniem lokalnych modeli LLM
+  - Wsparcie dla wielu formatów wyjściowych (.doc, .docx, .pdf, .odt)
+  - Batch processing dużych dokumentów
+  - Incremental updates istniejących dokumentów
+  - Template-based formatting
 
 ---
 
