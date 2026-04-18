@@ -1,0 +1,31 @@
+Rozdział 1: Wstęp do sztucznej inteligencji
+
+Sztuczna inteligencja (AI) to dziedzina informatyki zajmująca się tworzeniem systemów zdolnych do wykonywania zadań wymagających ludzkiej inteligencji. Do takich zadań należą między innymi uczenie się, rozumowanie, percepcja i rozwiązywanie problemów. 1. 1 Historia rozwoju AI
+
+Historia sztucznej inteligencji rozpoczęła się w latach 50. XX wieku. Pierwsze koncepcje zostały przedstawione przez Alana Turinga, który zaproponował test mający na celu ocenę zdolności maszyny do myślenia. W 1956 roku odbyła się konferencja w Dartmouth, gdzie po raz pierwszy użyto terminu "sztuczna inteligencja". Było to przełomowe wydarzenie, które zapoczątkowało rozwój tej dziedziny. 1. 2 Rodzaje sztucznej inteligencji
+
+Możemy wyróżnić trzy główne rodzaje AI:
+
+- Słaba AI (Narrow AI): Systemy zaprojektowane do wykonywania konkretnych zadań, takie jak asystenci głosowi czy systemy rekomendacyjne. - Silna AI (General AI): Hipotetyczne systemy posiadające ludzki poziom inteligencji w różnych dziedzinach. - Superinteligencja: Teoretyczna forma AI przewyższająca ludzkie możliwości we wszystkich aspektach. Rozdział 2: Uczenie maszynowe
+
+Uczenie maszynowe (Machine Learning) to poddziedzina sztucznej inteligencji koncentrująca się na opracowywaniu algorytmów, które mogą uczyć się na podstawie danych. 2. 1 Uczenie nadzorowane
+
+W uczeniu nadzorowanym model jest trenowany na danych zawierających zarówno wejścia, jak i oczekiwane wyjścia. Przykładami są klasyfikacja i regresja. 2. 2 Uczenie nienadzorowane
+
+W tym przypadku model pracuje z danymi nieoznaczonymi, odkrywając ukryte wzorce i struktury. Typowe zastosowania to klastrowanie i redukcja wymiarowości. 2. 3 Uczenie ze wzmocnieniem
+
+Uczenie ze wzmocnieniem polega na trenowaniu agenta poprzez system nagród i kar. Agent uczy się optymalnej strategii działania w danym środowisku. Rozdział 3: Sieci neuronowe
+
+Sieci neuronowe są inspirowane budową ludzkiego mózgu. Składają się z warstw połączonych neuronów, które przetwarzają informacje. 3. 1 Architektura sieci neuronowych
+
+Podstawowa sieć neuronowa składa się z trzech rodzajów warstw:
+- Warstwa wejściowa: Przyjmuje dane do przetworzenia
+- Warstwy ukryte: Przetwarzają informacje pośrednie
+- Warstwa wyjściowa: Generuje końcowy wynik
+
+3. 2 Głębokie uczenie
+
+Głębokie uczenie (Deep Learning) wykorzystuje wielowarstwowe sieci neuronowe do rozwiązywania złożonych problemów. Znajduje zastosowanie w rozpoznawaniu obrazów, przetwarzaniu języka naturalnego i wielu innych dziedzinach. Podsumowanie
+
+Sztuczna inteligencja rozwija się dynamicznie, otwierając nowe możliwości w różnych dziedzinach życia. Od medycyny po transport, AI zmienia sposób, w jaki żyjemy i pracujemy. 
+ 

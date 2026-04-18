@@ -1,0 +1,19 @@
+{
+  "source_file": "test2.md",
+  "chunk_index": 0,
+  "total_chunks": 1,
+  "token_count": 113,
+  "page_number": 1,
+  "timestamp": "2026-04-18T06:47:25",
+  "context": {
+    "previous_chapter": "",
+    "next_chapter": "Podrozdzial 1.1",
+    "previous_subchapter": "",
+    "next_subchapter": "Podrozdzial 1.1",
+    "previous_subsubchapter": "",
+    "next_subsubchapter": "",
+    "title": "Wstep",
+    "subtitle": ""
+  },
+  "content": "# Wstep\n## Podrozdzial 1. 1\nTekst w podrozdziale z wieloma zdaniami. Kolejne zdanie testowe. Jeszcze jedno zdanie dla lepszego testu. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. \n "
+}

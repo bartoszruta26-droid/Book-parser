@@ -1,0 +1,66 @@
+2026-04-18 06:42:29,416 - INFO - Rozpoczynanie procesu chunkowania
+2026-04-18 06:42:29,416 - INFO - Katalog wejściowy: ./input
+2026-04-18 06:42:29,416 - INFO - Katalog wyjściowy: ./chunk
+2026-04-18 06:42:29,416 - INFO - Rozmiar chunka: 4096 tokenów
+2026-04-18 06:42:29,416 - INFO - Skanowanie katalogu: input
+2026-04-18 06:42:29,417 - INFO - Znaleziono 2 plików do przetworzenia
+2026-04-18 06:42:29,417 - INFO - Postęp: 1/2 (50%)
+2026-04-18 06:42:29,417 - INFO - Przetwarzanie pliku: input/sample_document.txt
+2026-04-18 06:42:29,432 - INFO - Plik input/sample_document.txt jest duplikatem - pomijam
+2026-04-18 06:42:29,432 - INFO - Postęp: 2/2 (100%)
+2026-04-18 06:42:29,432 - INFO - Przetwarzanie pliku: input/large_document.txt
+2026-04-18 06:42:29,433 - INFO - Rozpoczynanie chunkowania: input/large_document.txt
+2026-04-18 06:42:29,433 - INFO - Długość tekstu: 7913 znaków
+2026-04-18 06:42:29,433 - INFO - Dodano rozdział: Rozdział 1: Wstęp do programowania w Python (strona 1)
+2026-04-18 06:42:29,435 - INFO - Dodano rozdział: Rozdział 2: Podstawy składni Python (strona 1)
+2026-04-18 06:42:29,435 - INFO - Dodano rozdział: # kod wykonywany jeśli warunek jest prawdziwy (strona 1)
+2026-04-18 06:42:29,436 - INFO - Dodano rozdział: # kod wykonywany jeśli pierwszy warunek fałszywy, ale drugi prawdziwy (strona 1)
+2026-04-18 06:42:29,436 - INFO - Dodano rozdział: # kod wykonywany jeśli żaden warunek nie jest prawdziwy (strona 1)
+2026-04-18 06:42:29,436 - INFO - Dodano rozdział: Rozdział 3: Funkcje i moduły (strona 1)
+2026-04-18 06:42:29,436 - INFO - Dodano rozdział: # ciało funkcji (strona 1)
+2026-04-18 06:42:29,437 - INFO - Dodano rozdział: # Plik moj_modul.py (strona 1)
+2026-04-18 06:42:29,437 - INFO - Dodano rozdział: # Inny plik (strona 1)
+2026-04-18 06:42:29,437 - INFO - Dodano rozdział: Rozdział 4: Programowanie obiektowe (strona 1)
+2026-04-18 06:42:29,437 - INFO - Dodano rozdział: # Tworzenie obiektu (strona 1)
+2026-04-18 06:42:29,437 - INFO - Dodano rozdział: Rozdział 5: Obsługa wyjątków (strona 1)
+2026-04-18 06:42:29,438 - INFO - Dodano rozdział: # kod, który może spowodować błąd (strona 1)
+2026-04-18 06:42:29,438 - INFO - Wykryto strukturę: 13 rozdziałów, 25 podrozdziałów
+2026-04-18 06:42:29,449 - INFO - Utworzono chunk 0 (ostatni): 7904 znaków
+2026-04-18 06:42:29,449 - INFO - Utworzono łącznie 1 chunków z pliku input/large_document.txt
+2026-04-18 06:42:29,450 - INFO - Zakończono przetwarzanie input/large_document.txt: 1 chunków
+2026-04-18 06:42:29,450 - INFO - ============================================================
+2026-04-18 06:42:29,451 - INFO - PODSUMOWANIE PROCESU CHUNKOWANIA
+2026-04-18 06:42:29,451 - INFO - ============================================================
+2026-04-18 06:42:29,451 - INFO - Przetworzone pliki: 1
+2026-04-18 06:42:29,451 - INFO - Nieudane pliki: 0
+2026-04-18 06:42:29,451 - INFO - Znalezione duplikaty: 1
+2026-04-18 06:42:29,451 - INFO - Łączna liczba chunków: 1
+2026-04-18 06:42:29,451 - INFO - Katalog wyjściowy: chunk
+2026-04-18 06:42:29,451 - INFO - ============================================================
+2026-04-18 06:42:29,451 - INFO - Proces chunkowania zakończony
+[2026-04-18 06:47:25] === Nowa sesja chunkowania ===
+[2026-04-18 06:47:25] Inicjalizacja DocumentChunker
+[2026-04-18 06:47:25] Katalog wejściowy: ./input
+[2026-04-18 06:47:25] Katalog wyjściowy: ./chunk
+[2026-04-18 06:47:25] Rozmiar chunka: 4096 tokenów
+[2026-04-18 06:47:25] Rozpoczynanie skanowania katalogu: ./input
+[2026-04-18 06:47:25] Przetwarzanie pliku: test1.txt
+[2026-04-18 06:47:25] Wykryto rozdziałów: 1
+[2026-04-18 06:47:25] Utworzono chunków: 1
+[2026-04-18 06:47:25] Zakończono przetwarzanie: test1.txt
+[2026-04-18 06:47:25] Przetwarzanie pliku: sample_document.txt
+[2026-04-18 06:47:25] Wykryto rozdziałów: 5
+[2026-04-18 06:47:25] Utworzono chunków: 1
+[2026-04-18 06:47:25] Zakończono przetwarzanie: sample_document.txt
+[2026-04-18 06:47:25] Przetwarzanie pliku: test2.md
+[2026-04-18 06:47:25] Wykryto rozdziałów: 2
+[2026-04-18 06:47:25] Utworzono chunków: 1
+[2026-04-18 06:47:25] Zakończono przetwarzanie: test2.md
+[2026-04-18 06:47:25] Przetwarzanie pliku: large_document.txt
+[2026-04-18 06:47:25] Wykryto rozdziałów: 23
+[2026-04-18 06:47:25] Utworzono chunków: 1
+[2026-04-18 06:47:25] Zakończono przetwarzanie: large_document.txt
+[2026-04-18 06:47:25] === Podsumowanie ===
+[2026-04-18 06:47:25] Przetworzono plików: 4
+[2026-04-18 06:47:25] Pominięto (duplikaty/błędy): 0
+[2026-04-18 06:47:25] Łączna liczba chunków w katalogu: 6
