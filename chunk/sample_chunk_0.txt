@@ -1,0 +1,2 @@
+To jest przykładowy dokument tekstowy. Zawiera kilka zdań do przetestowania chunkera. Drugi akapit tekstu. 
+ 

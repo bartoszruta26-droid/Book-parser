@@ -1,27 +1,11 @@
-# Microsoft Office files
-*.doc
-*.docx
-*.xls
-*.xlsx
-*.ppt
-*.pptx
-
-# Temporary files
-*.tmp
-*.temp
-*.bak
-
-# OS generated files
-.DS_Store
-Thumbs.db
-ehthumbs.db
-Icon?
-desktop.ini
-
-# Log files
+```
+# Logs
 *.log
 
-# Environment variables
-.env
-.env.local
-*.env.*
+# Temporary and test files
+*.tmp
+*.temp
+
+# Test directories
+test_files/
+```

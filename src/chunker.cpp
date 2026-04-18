@@ -272,6 +272,174 @@ private:
         return metadata;
     }
     
+    // Ekstrakcja tekstu za pomocą zewnętrznych narzędzi
+    std::string extract_with_command(const std::string& command, const std::string& file_path) {
+        std::string temp_file = "/tmp/chunker_extract_" + std::to_string(std::time(nullptr)) + "_" + 
+                                std::to_string(rand()) + ".txt";
+        std::string cmd = command + " \"" + file_path + "\" \"" + temp_file + "\" 2>&1";
+        
+        (void)std::system(cmd.c_str());
+        
+        // Sprawdź czy plik wyjściowy istnieje i ma zawartość
+        if (!fs::exists(temp_file) || fs::file_size(temp_file) == 0) {
+            logger.log("Błąd wykonania komendy: " + command + " dla pliku: " + file_path);
+            if (fs::exists(temp_file)) {
+                fs::remove(temp_file);
+            }
+            return "";
+        }
+        
+        std::ifstream input_file(temp_file);
+        if (!input_file.is_open()) {
+            logger.log("Nie można otworzyć pliku tymczasowego: " + temp_file);
+            fs::remove(temp_file);
+            return "";
+        }
+        
+        std::stringstream buffer;
+        buffer << input_file.rdbuf();
+        std::string content = buffer.str();
+        input_file.close();
+        
+        // Usuń plik tymczasowy
+        fs::remove(temp_file);
+        
+        return content;
+    }
+    
+    // Ekstrakcja tekstu z pliku DOCX
+    std::string extract_docx(const std::string& file_path) {
+        std::string content;
+        std::string temp_dir = "/tmp/chunker_docx_" + std::to_string(std::time(nullptr));
+        
+        // Utwórz katalog tymczasowy
+        fs::create_directories(temp_dir);
+        
+        // Rozpakuj DOCX (to jest ZIP)
+        std::string unzip_cmd = "unzip -q -o \"" + file_path + "\" -d \"" + temp_dir + "\" 2>/dev/null";
+        if (std::system(unzip_cmd.c_str()) != 0) {
+            logger.log("Błąd rozpakowywania DOCX: " + file_path);
+            fs::remove_all(temp_dir);
+            return "";
+        }
+        
+        // Odczytaj document.xml
+        std::string doc_xml = temp_dir + "/word/document.xml";
+        std::ifstream xml_file(doc_xml);
+        if (!xml_file.is_open()) {
+            logger.log("Nie można otworzyć document.xml w DOCX");
+            fs::remove_all(temp_dir);
+            return "";
+        }
+        
+        std::stringstream buffer;
+        buffer << xml_file.rdbuf();
+        std::string xml_content = buffer.str();
+        xml_file.close();
+        
+        // Proste usuwanie tagów XML
+        bool in_tag = false;
+        for (char c : xml_content) {
+            if (c == '<') {
+                in_tag = true;
+            } else if (c == '>') {
+                in_tag = false;
+            } else if (!in_tag) {
+                content += c;
+            }
+        }
+        
+        // Zamień encje XML
+        size_t pos;
+        while ((pos = content.find("&amp;")) != std::string::npos) {
+            content.replace(pos, 5, "&");
+        }
+        while ((pos = content.find("&lt;")) != std::string::npos) {
+            content.replace(pos, 4, "<");
+        }
+        while ((pos = content.find("&gt;")) != std::string::npos) {
+            content.replace(pos, 4, ">");
+        }
+        while ((pos = content.find("&quot;")) != std::string::npos) {
+            content.replace(pos, 6, "\"");
+        }
+        while ((pos = content.find("&apos;")) != std::string::npos) {
+            content.replace(pos, 6, "'");
+        }
+        
+        // Usuń katalog tymczasowy
+        fs::remove_all(temp_dir);
+        
+        return content;
+    }
+    
+    // Ekstrakcja tekstu z pliku XLSX
+    std::string extract_xlsx(const std::string& file_path) {
+        std::string content;
+        std::string temp_dir = "/tmp/chunker_xlsx_" + std::to_string(std::time(nullptr));
+        
+        // Utwórz katalog tymczasowy
+        fs::create_directories(temp_dir);
+        
+        // Rozpakuj XLSX (to jest ZIP)
+        std::string unzip_cmd = "unzip -q -o \"" + file_path + "\" -d \"" + temp_dir + "\" 2>/dev/null";
+        if (std::system(unzip_cmd.c_str()) != 0) {
+            logger.log("Błąd rozpakowywania XLSX: " + file_path);
+            fs::remove_all(temp_dir);
+            return "";
+        }
+        
+        // Odczytaj sharedStrings.xml
+        std::string strings_xml = temp_dir + "/xl/sharedStrings.xml";
+        std::ifstream xml_file(strings_xml);
+        if (!xml_file.is_open()) {
+            logger.log("Nie można otworzyć sharedStrings.xml w XLSX");
+            fs::remove_all(temp_dir);
+            return "";
+        }
+        
+        std::stringstream buffer;
+        buffer << xml_file.rdbuf();
+        std::string xml_content = buffer.str();
+        xml_file.close();
+        
+        // Proste usuwanie tagów XML i ekstrakcja tekstu
+        bool in_tag = false;
+        for (char c : xml_content) {
+            if (c == '<') {
+                in_tag = true;
+            } else if (c == '>') {
+                in_tag = false;
+                content += '\n';
+            } else if (!in_tag) {
+                content += c;
+            }
+        }
+        
+        // Zamień encje XML
+        size_t pos;
+        while ((pos = content.find("&amp;")) != std::string::npos) {
+            content.replace(pos, 5, "&");
+        }
+        while ((pos = content.find("&lt;")) != std::string::npos) {
+            content.replace(pos, 4, "<");
+        }
+        while ((pos = content.find("&gt;")) != std::string::npos) {
+            content.replace(pos, 4, ">");
+        }
+        while ((pos = content.find("&quot;")) != std::string::npos) {
+            content.replace(pos, 6, "\"");
+        }
+        while ((pos = content.find("&apos;")) != std::string::npos) {
+            content.replace(pos, 6, "'");
+        }
+        
+        // Usuń katalog tymczasowy
+        fs::remove_all(temp_dir);
+        
+        return content;
+    }
+    
     // Zapis chunka do pliku JSON
     void save_chunk_json(const std::string& output_path, 
                         const std::string& content,
@@ -327,24 +495,91 @@ private:
         std::string extension = file_path.extension().string();
         
         // Sprawdź obsługiwane formaty
-        if (extension != ".txt" && extension != ".md" && extension != ".json") {
+        std::set<std::string> supported_extensions = {
+            ".txt", ".md", ".json",      // Formaty tekstowe
+            ".pdf",                       // PDF
+            ".doc", ".docx",              // Microsoft Word
+            ".xls", ".xlsx",              // Microsoft Excel
+            ".odt"                        // OpenDocument Text
+        };
+        
+        if (supported_extensions.find(extension) == supported_extensions.end()) {
             logger.log("Pominięto nieobsługiwany format: " + filename);
             return false;
         }
         
-        logger.log("Przetwarzanie pliku: " + filename);
+        logger.log("Przetwarzanie pliku: " + filename + " (" + extension + ")");
         
-        // Wczytaj zawartość pliku
-        std::ifstream input_file(file_path);
-        if (!input_file.is_open()) {
-            logger.log("Błąd: Nie można otworzyć pliku: " + filename, true);
-            return false;
+        // Wczytaj zawartość pliku w zależności od rozszerzenia
+        std::string content;
+        bool load_success = false;
+        
+        if (extension == ".txt" || extension == ".md" || extension == ".json") {
+            // Proste pliki tekstowe
+            std::ifstream input_file(file_path);
+            if (!input_file.is_open()) {
+                logger.log("Błąd: Nie można otworzyć pliku: " + filename, true);
+                return false;
+            }
+            std::stringstream buffer;
+            buffer << input_file.rdbuf();
+            content = buffer.str();
+            input_file.close();
+            load_success = true;
+        }
+        else if (extension == ".pdf") {
+            // PDF - użyj pdftotext
+            content = extract_with_command("pdftotext", file_path.string());
+            load_success = !content.empty();
+        }
+        else if (extension == ".doc") {
+            // DOC - użyj wvText
+            content = extract_with_command("wvText", file_path.string());
+            load_success = !content.empty();
+        }
+        else if (extension == ".docx") {
+            // DOCX - unzip i parse XML
+            content = extract_docx(file_path.string());
+            load_success = !content.empty();
+        }
+        else if (extension == ".xls") {
+            // XLS - użyj xls2csv lub wvWare
+            content = extract_with_command("wvText", file_path.string());
+            load_success = !content.empty();
+        }
+        else if (extension == ".xlsx") {
+            // XLSX - unzip i parse XML
+            content = extract_xlsx(file_path.string());
+            load_success = !content.empty();
+        }
+        else if (extension == ".odt") {
+            // ODT - użyj odt2txt z opcją --output
+            std::string temp_file = "/tmp/chunker_odt_" + std::to_string(std::time(nullptr)) + "_" + 
+                                    std::to_string(rand()) + ".txt";
+            std::string cmd = "odt2txt --output=\"" + temp_file + "\" \"" + file_path.string() + "\" 2>&1";
+            (void)std::system(cmd.c_str());
+            
+            if (!fs::exists(temp_file) || fs::file_size(temp_file) == 0) {
+                logger.log("Błąd wykonania komendy: odt2txt dla pliku: " + filename);
+                if (fs::exists(temp_file)) fs::remove(temp_file);
+                load_success = false;
+            } else {
+                std::ifstream input_file(temp_file);
+                if (input_file.is_open()) {
+                    std::stringstream buffer;
+                    buffer << input_file.rdbuf();
+                    content = buffer.str();
+                    input_file.close();
+                    load_success = true;
+                }
+                fs::remove(temp_file);
+            }
         }
         
-        std::stringstream buffer;
-        buffer << input_file.rdbuf();
-        std::string content = buffer.str();
-        input_file.close();
+        if (!load_success) {
+            logger.log("Błąd: Nie udało się wczytać zawartości pliku: " + filename, true);
+            return false;
+        }
         
         // Sprawdź duplikaty
         std::string hash = MD5Hash::calculate(content);
@@ -435,11 +670,16 @@ public:
         
         for (const auto& entry : fs::directory_iterator(input_dir)) {
             if (entry.is_regular_file()) {
+                std::string ext = entry.path().extension().string();
                 if (process_file(entry.path())) {
                     processed_count++;
                 } else {
-                    std::string ext = entry.path().extension().string();
-                    if (ext == ".txt" || ext == ".md" || ext == ".json") {
+                    // Sprawdź czy to był obsługiwany format
+                    std::set<std::string> supported_extensions = {
+                        ".txt", ".md", ".json", ".pdf", ".doc", ".docx", 
+                        ".xls", ".xlsx", ".odt"
+                    };
+                    if (supported_extensions.find(ext) != supported_extensions.end()) {
                         skipped_count++;
                     }
                 }
@@ -472,7 +712,7 @@ void print_help() {
     std::cout << "  -s, --chunk-size N    Rozmiar chunka w tokenach (domyślnie: 4096)\n";
     std::cout << "  -v, --verbose         Tryb szczegółowy\n";
     std::cout << "  -h, --help            Wyświetl tę pomoc\n";
-    std::cout << "\nObsługiwane formaty: .txt, .md, .json\n";
+    std::cout << "\nObsługiwane formaty: .txt, .md, .json, .pdf, .doc, .docx, .xls, .xlsx, .odt\n";
 }
 
 int main(int argc, char* argv[]) {
