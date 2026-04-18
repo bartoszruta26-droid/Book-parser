@@ -299,12 +299,213 @@ cd mempalace
 # Postępuj zgodnie z instrukcjami instalacji mempalace
 ```
 
-### 5. Konfiguracja Qwen Coder
+### 5. Instalacja i konfiguracja Ollama z Qwen Code na Raspberry Pi 4
+
+Poniżej znajdziesz szczegółową instrukcję instalacji Ollama i najnowszych modeli Qwen Code (Qwen 2.5 Coder) na Raspberry Pi 4.
+
+#### Krok 5.1: Wymagania wstępne
+Upewnij się, że Twój Raspberry Pi 4 ma:
+- **System**: Raspberry Pi OS 64-bit (Bullseye lub Bookworm) lub Ubuntu Server 22.04+ ARM64
+- **RAM**: Minimum 4GB (zalecane 8GB dla modeli 7B+)
+- **Storage**: Co najmniej 10GB wolnego miejsca na modele
+- **Chłodzenie**: Aktywne chłodzenie zalecane dla długotrwałych inferencji
+- **Swap**: Zalecane ustawienie swapu na 4-8GB dla stabilności
+
 ```bash
-# Przykład z użyciem Ollama
-curl -fsSL https://ollama.ai/install.sh  | sh
-ollama pull qwen-coder
+# Sprawdzenie architektury systemu
+uname -m  # Powinno zwrócić: aarch64 lub arm64
+
+# Sprawdzenie dostępnej pamięci RAM
+free -h
+
+# Sprawdzenie wolnego miejsca na dysku
+df -h /
 ```
+
+#### Krok 5.2: Konfiguracja swapu (opcjonalne, ale zalecane)
+```bash
+# Wyłącz istniejący swap
+sudo dphys-swapfile swapoff
+sudo dphys-swapfile uninstall
+
+# Edytuj konfigurację swapu
+sudo nano /etc/dphys-swapfile
+
+# Zmień wartość na:
+CONF_SWAPSIZE=4096  # lub 8192 dla 8GB swapu
+
+# Włącz nowy swap
+sudo dphys-swapfile setup
+sudo dphys-swapfile swapon
+sudo systemctl enable dphys-swapfile
+```
+
+#### Krok 5.3: Instalacja Ollama
+Ollama oficjalnie wspiera architekturę ARM64. Zainstalujesz ją jedną komendą:
+
+```bash
+# Pobierz i uruchom instalator
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Alternatywnie, jeśli powyższe nie działa na ARM:
+# Ręczna instalacja dla ARM64
+curl -L https://ollama.com/download/ollama-linux-arm64.tgz -o ollama-linux-arm64.tgz
+sudo tar -C /usr -xzf ollama-linux-arm64.tgz
+
+# Uruchom usługę Ollama
+sudo systemctl start ollama
+sudo systemctl enable ollama
+
+# Sprawdź status usługi
+systemctl status ollama
+
+# Sprawdź czy Ollama działa
+ollama --version
+```
+
+#### Krok 5.4: Pobranie modelu Qwen 2.5 Coder
+Qwen 2.5 Coder to najnowszy model kodujący od Alibaba. Dostępny w kilku rozmiarach:
+
+| Model | Rozmiar | Wymagania RAM | Prędkość na RPi4 | Jakość |
+|-------|---------|---------------|------------------|--------|
+| `qwen2.5-coder:0.5b` | 0.5B | ~1GB | Bardzo szybki | Podstawowa |
+| `qwen2.5-coder:1.5b` | 1.5B | ~2GB | Szybki | Dobra |
+| `qwen2.5-coder:3b` | 3B | ~4GB | Umiarkowana | Bardzo dobra |
+| `qwen2.5-coder:7b` | 7B | ~8GB | Wolna | Najlepsza |
+
+```bash
+# Wybierz model odpowiedni do Twojego sprzętu:
+
+# Dla Raspberry Pi 4 z 4GB RAM (zalecany balans):
+ollama pull qwen2.5-coder:3b
+
+# Dla Raspberry Pi 4 z 8GB RAM (maksymalna jakość):
+ollama pull qwen2.5-coder:7b
+
+# Dla Raspberry Pi 4 z 2GB RAM (podstawowe zastosowania):
+ollama pull qwen2.5-coder:1.5b
+
+# Wersja podstawowa (najszybsza):
+ollama pull qwen2.5-coder:0.5b
+```
+
+#### Krok 5.5: Testowanie modelu
+```bash
+# Uruchom interaktywny czat z modelem
+ollama run qwen2.5-coder:3b "Napisz funkcję w Pythonie do sortowania bąbelkowego"
+
+# Sprawdź dostępne modele
+ollama list
+
+# Sprawdź szczegóły modelu
+ollama show qwen2.5-coder:3b
+```
+
+#### Krok 5.6: Konfiguracja wydajności dla Raspberry Pi 4
+Dla optymalnej wydajności na RPi4, utwórz plik konfiguracyjny:
+
+```bash
+# Stwórz plik środowiskowy dla Ollama
+sudo mkdir -p /etc/systemd/system/ollama.service.d
+sudo nano /etc/systemd/system/ollama.service.d/environment.conf
+```
+
+Dodaj następującą zawartość:
+```ini
+[Service]
+Environment="OLLAMA_NUM_PARALLEL=2"
+Environment="OLLAMA_MAX_LOADED_MODELS=1"
+Environment="OLLAMA_CONTEXT_LENGTH=4096"
+# Ograniczenie zużycia pamięci dla stabilności
+Environment="OLLAMA_KEEP_ALIVE=5m"
+```
+
+Zrestartuj usługę:
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart ollama
+```
+
+#### Krok 5.7: Weryfikacja działania
+```bash
+# Sprawdź czy usługa działa
+curl http://localhost:11434/api/tags
+
+# Przykładowe zapytanie API
+curl http://localhost:11434/api/generate -d '{
+  "model": "qwen2.5-coder:3b",
+  "prompt": "Witaj! Jak się masz?",
+  "stream": false
+}'
+```
+
+#### Krok 5.8: Rozwiązywanie typowych problemów
+
+**Problem: Ollama nie startuje na ARM**
+```bash
+# Sprawdź logi
+journalctl -u ollama -f
+
+# Upewnij się, że masz bibliotekę libc6
+sudo apt update
+sudo apt install -y libc6 libstdc++6
+```
+
+**Problem: Brak pamięci podczas ładowania modelu**
+```bash
+# Zwiększ swap
+sudo systemctl stop ollama
+sudo nano /etc/dphys-swapfile
+# Zmień CONF_SWAPSIZE=8192
+sudo dphys-swapfile setup
+sudo dphys-swapfile swapon
+sudo systemctl start ollama
+```
+
+**Problem: Wolna inferencja**
+- Użyj mniejszego modelu (np. `qwen2.5-coder:1.5b` zamiast `7b`)
+- Zamknij inne aplikacje zużywające RAM
+- Upewnij się, że CPU nie jest thermal throttled: `vcgencmd get_throttled`
+
+#### Krok 5.9: Automatyczne uruchamianie przy starcie systemu
+Ollama powinna być już skonfigurowana jako usługa systemowa. Sprawdź:
+
+```bash
+# Sprawdź czy usługa jest włączona
+systemctl is-enabled ollama
+
+# Jeśli nie, włącz ją
+sudo systemctl enable ollama
+
+# Restart po rebootzie
+sudo reboot
+# Po restarcie sprawdź:
+systemctl status ollama
+```
+
+#### Krok 5.10: Integracja z book-parser
+Po skonfigurowaniu Ollama, zaktualizuj plik konfiguracyjny book-parser:
+
+```bash
+nano config.json
+```
+
+Upewnij się, że zawiera odpowiednie wpisy:
+```json
+{
+  "llm_model": "qwen2.5-coder:3b",
+  "llm_endpoint": "http://localhost:11434",
+  "llm_provider": "ollama"
+}
+```
+
+---
+
+**Porady dla Raspberry Pi 4:**
+- 🌡️ **Monitoruj temperaturę**: `vcgencmd measure_temp` - powyżej 80°C może występować throttling
+- ⚡ **Używaj dobrego zasilacza**: Oficjalny zasilacz 5V/3A jest konieczny dla stabilności
+- 💾 **Rozważ SSD przez USB 3.0**: Szybsze niż karta microSD, szczególnie dla operacji I/O
+- 🔧 **Undervolting/Overclocking**: Tylko dla zaawansowanych użytkowników z dobrym chłodzeniem
 
 ### 6. Konfiguracja n8n
 ```bash
@@ -322,7 +523,7 @@ cd openclaw
 # ... dalsza konfiguracja
 ```
 
-### 8. Instalacja i konfiguracja OfficeCli
+### 9. Instalacja i konfiguracja OfficeCli
 **OfficeCli** to zaawansowane narzędzie AI do generowania i manipulacji dokumentami biurowymi z linii poleceń.
 
 #### Instalacja OfficeCli
@@ -347,7 +548,7 @@ officecli --version
 officecli config init
 
 # Konfiguracja modelu AI (opcjonalne)
-officecli config set ai-model qwen-coder
+officecli config set ai-model qwen2.5-coder:3b
 officecli config set ai-endpoint http://localhost:11434
 
 # Ustawienie domyślnego formatu wyjściowego
@@ -367,16 +568,13 @@ officecli generate \
 officecli generate \
   --input /workspace/chunks \
   --output /workspace/finish/book.doc \
-  --ai-model qwen-coder \
+  --ai-model qwen2.5-coder:3b \
   --ai-compose
-
-# Podgląd dostępnych opcji
-officecli generate --help
 ```
 
 > **Więcej informacji**: [Oficjalna dokumentacja OfficeCli](https://github.com/iOfficeAI/OfficeCli)
 
-### 9. Edycja pliku konfiguracyjnego
+### 10. Edycja pliku konfiguracyjnego
 ```bash
 cp config.example.json config.json
 nano config.json
@@ -389,8 +587,9 @@ Przykładowa konfiguracja:
   "output_folder": "/home/pi/books/output",
   "chunk_size_tokens": 4096,
   "mempalace_endpoint": "http://localhost:8080",
-  "llm_model": "qwen-coder",
+  "llm_model": "qwen2.5-coder:3b",
   "llm_endpoint": "http://localhost:11434",
+  "llm_provider": "ollama",
   "n8n_webhook": "http://localhost:5678/webhook/book-parser",
   "logging_level": "INFO"
 }
@@ -591,8 +790,9 @@ sudo systemctl restart mempalace
 #### ❌ Błąd: "Qwen model not found"
 **Rozwiązanie**:
 ```bash
-ollama pull qwen-coder
+ollama pull qwen2.5-coder:3b
 # Lub sprawdź endpoint w config.json
+# Dostępne modele: qwen2.5-coder:0.5b, :1.5b, :3b, :7b
 ```
 
 ### Gdzie szukać logów?
