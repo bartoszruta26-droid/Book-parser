@@ -1,16 +1,38 @@
 ```
-# Logs
-*.log
-
-# Build artifacts
+# Compiled and build artifacts
 *.o
 *.obj
 *.out
-mempalace_client
+build/
+dist/
 
-# Temp files
+# Dependencies
+.venv/
+venv/
+node_modules/
+
+# Logs and temp files
+*.log
 *.tmp
+*.swp
 
-# Chunks
-chunk/
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+
+# Coverage reports
+coverage/
+htmlcov/
+*.coverage
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+.Python
 ```
