@@ -1,0 +1,40 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          g++ \
+          libreoffice \
+          poppler-utils \
+          pandoc \
+          git \
+          curl
+    
+    - name: Build
+      run: |
+        mkdir -p build
+        cd build
+        cmake .. || true
+        make -j$(nproc) || true
+    
+    - name: Check README formatting
+      run: |
+        if ! grep -q "# 📚 Book-Parser" README.md; then
+          echo "README.md missing proper header"
+          exit 1
+        fi
