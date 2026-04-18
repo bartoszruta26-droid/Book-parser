@@ -560,4 +560,10 @@ Szczegóły znajdziesz w pliku [`LICENSE`](LICENSE).
 
 Made with ❤️ on Raspberry Pi 4
 
+---
+
+### 📦 Output końcowy
+
+> **Na koniec w katalogu `/finish` będzie poskładana książka w formacie `.doc` z wykorzystaniem [oOfficeAI OfficeCli](https://github.com/iOfficeAI/OfficeCli).**
+
 </div>
