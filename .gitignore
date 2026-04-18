@@ -2,10 +2,15 @@
 # Logs
 *.log
 
-# Temporary and test files
-*.tmp
-*.temp
+# Build artifacts
+*.o
+*.obj
+*.out
+mempalace_client
 
-# Test directories
-test_files/
+# Temp files
+*.tmp
+
+# Chunks
+chunk/
 ```
