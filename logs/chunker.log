@@ -19,3 +19,55 @@
 [2026-04-18 12:33:06] Przetworzono plików: 2
 [2026-04-18 12:33:06] Pominięto (duplikaty/błędy): 1
 [2026-04-18 12:33:06] Łączna liczba chunków w katalogu: 1
+[2026-04-18 12:59:08] === Nowa sesja chunkowania ===
+[2026-04-18 12:59:08] Inicjalizacja DocumentChunker
+[2026-04-18 12:59:08] Katalog wejściowy: ./input
+[2026-04-18 12:59:08] Katalog wyjściowy: ./chunk
+[2026-04-18 12:59:08] Rozmiar chunka: 4096 tokenów
+[2026-04-18 12:59:08] Rozpoczynanie skanowania katalogu: ./input
+[2026-04-18 12:59:08] Przetwarzanie pliku: test2.md (.md)
+[2026-04-18 12:59:08] Wykryto rozdziałów: 2
+[2026-04-18 12:59:08] Utworzono chunków: 1
+[2026-04-18 12:59:08] Zakończono przetwarzanie: test2.md
+[2026-04-18 12:59:08] Przetwarzanie pliku: test1.txt (.txt)
+[2026-04-18 12:59:08] Wykryto rozdziałów: 1
+[2026-04-18 12:59:08] Utworzono chunków: 1
+[2026-04-18 12:59:08] Zakończono przetwarzanie: test1.txt
+[2026-04-18 12:59:08] Przetwarzanie pliku: sample_document.txt (.txt)
+[2026-04-18 12:59:08] Wykryto rozdziałów: 5
+[2026-04-18 12:59:08] Utworzono chunków: 1
+[2026-04-18 12:59:08] Zakończono przetwarzanie: sample_document.txt
+[2026-04-18 12:59:08] Przetwarzanie pliku: large_document.txt (.txt)
+[2026-04-18 12:59:08] Wykryto rozdziałów: 23
+[2026-04-18 12:59:08] Utworzono chunków: 1
+[2026-04-18 12:59:08] Zakończono przetwarzanie: large_document.txt
+[2026-04-18 12:59:08] === Podsumowanie ===
+[2026-04-18 12:59:08] Przetworzono plików: 4
+[2026-04-18 12:59:08] Pominięto (duplikaty/błędy): 0
+[2026-04-18 12:59:08] Łączna liczba chunków w katalogu: 5
+[2026-04-18 12:59:50] === Nowa sesja chunkowania ===
+[2026-04-18 12:59:50] Inicjalizacja DocumentChunker
+[2026-04-18 12:59:50] Katalog wejściowy: ./input
+[2026-04-18 12:59:50] Katalog wyjściowy: ./chunk
+[2026-04-18 12:59:50] Rozmiar chunka: 4096 tokenów
+[2026-04-18 12:59:50] Rozpoczynanie skanowania katalogu: ./input
+[2026-04-18 12:59:50] Przetwarzanie pliku: test2.md (.md)
+[2026-04-18 12:59:50] Wykryto rozdziałów: 2
+[2026-04-18 12:59:50] Utworzono chunków: 1
+[2026-04-18 12:59:50] Zakończono przetwarzanie: test2.md
+[2026-04-18 12:59:50] Przetwarzanie pliku: test1.txt (.txt)
+[2026-04-18 12:59:50] Wykryto rozdziałów: 1
+[2026-04-18 12:59:50] Utworzono chunków: 1
+[2026-04-18 12:59:50] Zakończono przetwarzanie: test1.txt
+[2026-04-18 12:59:50] Przetwarzanie pliku: sample_document.txt (.txt)
+[2026-04-18 12:59:50] Wykryto rozdziałów: 5
+[2026-04-18 12:59:50] Utworzono chunków: 1
+[2026-04-18 12:59:50] Zakończono przetwarzanie: sample_document.txt
+[2026-04-18 12:59:50] Przetwarzanie pliku: large_document.txt (.txt)
+[2026-04-18 12:59:50] Wykryto rozdziałów: 23
+[2026-04-18 12:59:50] Utworzono chunków: 1
+[2026-04-18 12:59:50] Zakończono przetwarzanie: large_document.txt
+[2026-04-18 12:59:50] === Podsumowanie ===
+[2026-04-18 12:59:50] Przetworzono plików: 4
+[2026-04-18 12:59:50] Pominięto (duplikaty/błędy): 0
+[2026-04-18 12:59:50] Łączna liczba chunków w katalogu: 5
