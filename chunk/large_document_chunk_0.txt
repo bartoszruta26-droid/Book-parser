@@ -1,0 +1,213 @@
+Rozdział 1: Wstęp do programowania w Python
+
+Python to wszechstronny język programowania wysokiego poziomu, który zdobył ogromną popularność w ostatnich latach. Jego prostota składni i czytelność czynią go idealnym wyborem zarówno dla początkujących, jak i doświadczonych programistów. 1. 1 Historia języka Python
+
+Język Python został stworzony przez Guida van Rossuma pod koniec lat 80. XX wieku. Pierwsza publiczna wersja (0. 9. 0) została wydana w 1991 roku. Nazwa języka pochodzi od brytyjskiej grupy komediowej Monty Python, a nie od węża jak wielu sądzi. Guido van Rossum pracował nad Pythonem jako hobby podczas świąt Bożego Narodzenia w 1989 roku. Szukał projektu programistycznego, który zajęby mu czas w okresie świątecznym. Zainspirowany językiem ABC, chciał stworzyć język skryptowy, który byłby łatwy w użyciu i miał potężne możliwości. 1. 2 Filozofia Pythona
+
+Filozofia Pythona jest określana w dokumencie zwanym "The Zen of Python", który można przeczytać wpisując `import this` w interpreterze Pythona. Główne zasady to:
+
+- Piękne jest lepsze niż brzydkie
+- Eksplicytne jest lepsze niż implikcyjne
+- Proste jest lepsze niż złożone
+- Złożone jest lepsze niż skomplikowane
+- Płaskie jest lepsze niż zagnieżdżone
+- Przerwy są lepsze niż gęstość
+- Czytelność ma znaczenie
+
+1. 3 Zastosowania Pythona
+
+Python znajduje zastosowanie w wielu dziedzinach:
+
+Web Development: Frameworki takie jak Django, Flask i FastAPI umożliwiają tworzenie zaawansowanych aplikacji internetowych. Popularne serwisy jak Instagram, Pinterest czy Spotify wykorzystują Pythona w swoich backendach. Data Science i Machine Learning: Biblioteki takie jak NumPy, Pandas, Scikit-learn, TensorFlow i PyTorch uczyniły z Pythona standard w analizie danych i uczeniu maszynowym. Automatyzacja i Scripting: Dzięki swojej prostocie Python jest idealny do automatyzacji powtarzalnych zadań, przetwarzania plików i administracji systemami. Nauka i Badania: Python jest szeroko używany w środowisku akademickim do symulacji, analizy danych i wizualizacji wyników badań. Rozdział 2: Podstawy składni Python
+
+Składnia Pythona jest znana ze swojej przejrzystości i minimalizmu. W przeciwieństwie do wielu innych języków, Python używa wcięć do definiowania bloków kodu, co wymusza czytelną strukturę programu. 2. 1 Zmienne i typy danych
+
+W Pythonie nie musimy deklarować typu zmiennej przed jej użyciem. Typ jest wnioskowany automatycznie na podstawie przypisanej wartości. Podstawowe typy danych w Pythonie:
+- Liczby całkowite (int): np. 42, -17, 0
+- Liczby zmiennoprzecinkowe (float): np. 3. 14, -0. 5, 2. 0
+- Napisy (str): np. "Hello", 'Python', '''tekst wielolinijkowy'''
+- Wartości logiczne (bool): True lub False
+- Lista (list): uporządkowana kolekcja elementów, np. [1, 2, 3]
+- Krotka (tuple): niemutowalna lista, np. (1, 2, 3)
+- Słownik (dict): kolekcja par klucz-wartość, np. {"name": "Alice", "age": 30}
+- Zbiór (set): nieuporządkowana kolekcja unikalnych elementów, np. {1, 2, 3}
+
+2. 2 Operatory
+
+Python obsługuje standardowe operatory arytmetyczne:
+- Dodawanie: +
+- Odejmowanie: -
+- Mnożenie: *
+- Dzielenie: /
+- Dzielenie całkowite: //
+- Modulo (reszta z dzielenia): %
+- Potęgowanie: **
+
+Operatory porównania:
+- Równe: ==
+- Nie równe: ! =
+- Większe niż: >
+- Mniejsze niż: <
+- Większe lub równe: >=
+- Mniejsze lub równe: <=
+
+2. 3 Instrukcje warunkowe
+
+Instrukcje warunkowe pozwalają na wykonywanie różnych fragmentów kodu w zależności od spełnienia określonych warunków. if warunek:
+    # kod wykonywany jeśli warunek jest prawdziwy
+elif inny_warunek:
+    # kod wykonywany jeśli pierwszy warunek fałszywy, ale drugi prawdziwy
+else:
+    # kod wykonywany jeśli żaden warunek nie jest prawdziwy
+
+Przykład:
+wiek = 18
+if wiek < 13:
+    print("Dziecko")
+elif wiek < 20:
+    print("Nastolatek")
+else:
+    print("Dorosły")
+
+2. 4 Pętle
+
+Pętla for: Używana do iterowania po sekwencjach (listach, krotkach, napisach). for i in range(5):
+    print(f"Liczba: {i}")
+
+Pętla while: Wykonuje kod tak długo, jak warunek jest prawdziwy. licznik = 0
+while licznik < 5:
+    print(f"Licznik: {licznik}")
+    licznik += 1
+
+Rozdział 3: Funkcje i moduły
+
+Funkcje są podstawowymi elementami modularnymi w Pythonie. Pozwalają na organizację kodu w logiczne bloki, które można wielokrotnie używać. 3. 1 Definiowanie funkcji
+
+Funkcję definiujemy za pomocą słowa kluczowego def:
+
+def nazwa_funkcji(parametr1, parametr2):
+    """Dokumentacja funkcji"""
+    # ciało funkcji
+    return wynik
+
+Przykład funkcji:
+
+def dodaj(a, b):
+    \"\"\"Dodaje dwie liczby i zwraca wynik\"\"\"
+    return a + b
+
+wynik = dodaj(5, 3)
+print(wynik)  # Output: 8
+
+3. 2 Argumenty funkcji
+
+Python oferuje elastyczne sposoby przekazywania argumentów:
+
+Argumenty domyślne:
+def powitanie(imie="Gość"):
+    print(f"Witaj, {imie}! ")
+
+Argumenty nazwane:
+def opis_osoby(imie, wiek, miasto):
+    print(f"{imie}, {wiek} lat, mieszka w {miasto}")
+
+opis_osoby(wiek=25, imie="Anna", miasto="Kraków")
+
+*args - dowolna liczba argumentów pozycyjnych:
+def suma_wszystkich(*liczby):
+    return sum(liczby)
+
+**kwargs - dowolna liczba argumentów nazwanych:
+def wypisz_dane(**dane):
+    for klucz, wartosc in dane.items():
+        print(f"{klucz}: {wartosc}")
+
+3. 3 Moduły i pakiety
+
+Moduł to plik zawierający definicje Pythona (funkcje, klasy, zmienne). Pakiet to katalog zawierający moduły. Importowanie modułów:
+import math
+from datetime import datetime
+from collections import defaultdict
+
+Tworzenie własnych modułów:
+# Plik moj_modul.py
+def witaj():
+    print("Witaj w moim module! ")
+
+# Inny plik
+import moj_modul
+moj_modul.witaj()
+
+Rozdział 4: Programowanie obiektowe
+
+Python wspiera programowanie obiektowe (OOP), które pozwala na modelowanie rzeczywistości za pomocą klas i obiektów. 4. 1 Klasy i obiekty
+
+Klasa to szablon do tworzenia obiektów. Obiekt to instancja klasy. class Osoba:
+    def __init__(self, imie, wiek):
+        self.imie = imie
+        self.wiek = wiek
+    
+    def przedstaw_sie(self):
+        print(f"Cześć, jestem {self.imie} i mam {self.wiek} lat. ")
+
+# Tworzenie obiektu
+osoba1 = Osoba("Adam", 30)
+osoba1.przedstaw_sie()
+
+4. 2 Dziedziczenie
+
+Dziedziczenie pozwala klasie potomnej przejmować cechy i metody klasy rodzica. class Pracownik(Osoba):
+    def __init__(self, imie, wiek, stanowisko):
+        super(). __init__(imie, wiek)
+        self.stanowisko = stanowisko
+    
+    def przedstaw_sie(self):
+        super().przedstaw_sie()
+        print(f"Pracuję jako {self.stanowisko}. ")
+
+pracownik = Pracownik("Ewa", 28, "Programista")
+pracownik.przedstaw_sie()
+
+4. 3 Polimorfizm
+
+Polimorfizm pozwala obiektom różnych klas być traktowanym jako obiekty wspólnej klasy nadrzędnej. class Kot:
+    def dźwięk(self):
+        return "Miau"
+
+class Pies:
+    def dźwięk(self):
+        return "Hau hau"
+
+zwierzeta = [Kot(), Pies()]
+for zwie in zwierzeta:
+    print(zwie.dźwięk())
+
+Rozdział 5: Obsługa wyjątków
+
+Wyjątki pozwalają na eleganckie radzenie sobie z błędami w czasie działania programu. 5. 1 Blok try-except
+
+try:
+    # kod, który może spowodować błąd
+    wynik = 10 / 0
+except ZeroDivisionError:
+    print("Nie można dzielić przez zero! ")
+except Exception as e:
+    print(f"Wystąpił błąd: {e}")
+finally:
+    print("Ten kod wykona się zawsze. ")
+
+5. 2 Własne wyjątki
+
+Możemy definiować własne typy wyjątków:
+
+class MojWyjatek(Exception):
+    pass
+
+def sprawdz_wiek(wiek):
+    if wiek < 0:
+        raise MojWyjatek("Wiek nie może być ujemny! ")
+
+Podsumowanie
+
+Python to potężny i elastyczny język programowania, który znalazł zastosowanie w wielu dziedzinach technologii. Jego prostota, czytelność i bogaty ekosystem bibliotek czynią go doskonałym wyborem zarówno dla początkujących, jak i profesjonalistów. Nauka Pythona otwiera drzwi do świata programowania, analizy danych, sztucznej inteligencji, automatyzacji i wielu innych fascynujących dziedzin. Dzięki aktywnej społeczności i ciągłemu rozwojowi, Python pozostaje jednym z najważniejszych języków programowania współczesności. 
+ 

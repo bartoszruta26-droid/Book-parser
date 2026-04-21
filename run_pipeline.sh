@@ -16,7 +16,8 @@ NC='\033[0m' # No Color
 # Wartości domyślne
 INPUT_DIR="./input"
 CHUNK_DIR="./chunk"
-OUTPUT_DIR="./output"
+REWRITEN_DIR="./rewriten"
+OUTPUT_DIR="./finish"
 MODEL="qwen2.5-coder:7b"
 STYLE="technical"
 LENGTH="medium"
@@ -33,7 +34,8 @@ print_help() {
     echo "Opcje:"
     echo "  -i, --input DIR       Katalog z dokumentami wejściowymi (domyślnie: ./input)"
     echo "  -c, --chunk-dir DIR   Katalog na chunki (domyślnie: ./chunk)"
-    echo "  -o, --output DIR      Katalog wyjściowy (domyślnie: ./output)"
+    echo "  -r, --rewriten DIR    Katalog na przepisane chunki (domyślnie: ./rewriten)"
+    echo "  -o, --output DIR      Katalog wyjściowy (domyślnie: ./finish)"
     echo "  -m, --model MODEL     Model Ollama (domyślnie: qwen2.5-coder:7b)"
     echo "  -s, --style STYLE     Styl: academic, journalistic, technical, creative, business, casual"
     echo "  -l, --length LENGTH   Długość: short, medium, long, very_long"
@@ -58,6 +60,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -c|--chunk-dir)
             CHUNK_DIR="$2"
+            shift 2
+            ;;
+        -r|--rewriten)
+            REWRITEN_DIR="$2"
             shift 2
             ;;
         -o|--output)
@@ -154,7 +160,7 @@ fi
 
 # Tworzenie katalogów
 echo -e "${YELLOW}Przygotowanie katalogów...${NC}"
-mkdir -p "$CHUNK_DIR" "$OUTPUT_DIR"
+mkdir -p "$CHUNK_DIR" "$REWRITEN_DIR" "$OUTPUT_DIR"
 
 # Kompilacja narzędzi
 echo -e "${YELLOW}Kompilacja narzędzi...${NC}"
@@ -278,13 +284,14 @@ if [[ "$EXPAND" == true ]]; then
         echo ""
         
         TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-        EXPANDED_OUTPUT="$OUTPUT_DIR/expanded_${TIMESTAMP}.json"
-        TEXT_OUTPUT="$OUTPUT_DIR/expanded_${TIMESTAMP}.txt"
+        REWRITEN_OUTPUT="$REWRITEN_DIR/rewritten_${TIMESTAMP}.json"
+        TEXT_OUTPUT="$REWRITEN_DIR/rewritten_${TIMESTAMP}.txt"
+        FINAL_OUTPUT="$OUTPUT_DIR/final_${TIMESTAMP}.json"
         
-        # Ekspansja z wybranymi parametrami
+        # Ekspansja z wybranymi parametrami - zapis do /rewriten
         ./ollama_expander \
             -i "$CHUNK_DIR" \
-            -o "$EXPANDED_OUTPUT" \
+            -o "$REWRITEN_OUTPUT" \
             -m "$MODEL" \
             -s "$STYLE" \
             -l "$LENGTH" \
@@ -292,7 +299,7 @@ if [[ "$EXPAND" == true ]]; then
             --max-chunks "$MAX_CHUNKS" \
             -v
         
-        # Konwersja do formatu tekstowego
+        # Konwersja do formatu tekstowego - zapis do /rewriten
         ./ollama_expander \
             -i "$CHUNK_DIR" \
             -o "$TEXT_OUTPUT" \
@@ -305,10 +312,20 @@ if [[ "$EXPAND" == true ]]; then
             2>/dev/null
         
         echo ""
-        echo -e "${GREEN}✓ Ekspansja zakończona sukcesem!${NC}"
+        echo -e "${GREEN}✓ Przepisywanie zakończone sukcesem!${NC}"
         echo -e "${YELLOW}Wyniki zapisano w:${NC}"
-        echo -e "  JSON: $EXPANDED_OUTPUT"
+        echo -e "  JSON: $REWRITEN_OUTPUT"
         echo -e "  TXT:  $TEXT_OUTPUT"
+        
+        # Krok 4: Przeniesienie wyników do /finish
+        echo ""
+        echo -e "${BLUE}=== KROK 4: Zapis do katalogu finish ===${NC}"
+        cp "$REWRITEN_OUTPUT" "$FINAL_OUTPUT"
+        cp "$TEXT_OUTPUT" "$OUTPUT_DIR/final_${TIMESTAMP}.txt"
+        echo -e "${GREEN}✓ Wyniki przeniesione do katalogu finish${NC}"
+        echo -e "${YELLOW}Finalne pliki w:${NC}"
+        echo -e "  JSON: $FINAL_OUTPUT"
+        echo -e "  TXT:  $OUTPUT_DIR/final_${TIMESTAMP}.txt"
     fi
 else
     echo -e "${BLUE}=== KROK 3: Pominięto ekspansję ===${NC}"
@@ -323,7 +340,8 @@ echo ""
 echo -e "${YELLOW}Podsumowanie:${NC}"
 echo -e "  Dokumenty wejściowe: $INPUT_DIR"
 echo -e "  Chunki: $CHUNK_DIR ($CHUNK_COUNT plików)"
-echo -e "  Output: $OUTPUT_DIR"
+echo -e "  Przepisane: $REWRITEN_DIR"
+echo -e "  Finalne: $OUTPUT_DIR"
 
 if [[ "$EXPAND" == true ]]; then
     echo -e "  Expander: ${GREEN}aktywny${NC} (model: $MODEL)"
@@ -331,6 +349,7 @@ fi
 
 echo ""
 echo -e "${YELLOW}Następne kroki:${NC}"
-echo -e "  1. Przeglądaj wyniki w katalogu $OUTPUT_DIR"
-echo -e "  2. Uruchom ponownie z innymi parametrami stylu/długości"
-echo -e "  3. Skonfiguruj mempalace dla trwałego przechowywania chunków"
+echo -e "  1. Przeglądaj wyniki w katalogu $OUTPUT_DIR (finish)"
+echo -e "  2. Sprawdź przepisane chunki w $REWRITEN_DIR"
+echo -e "  3. Uruchom ponownie z innymi parametrami stylu/długości"
+echo -e "  4. Skonfiguruj mempalace dla trwałego przechowywania chunków"
