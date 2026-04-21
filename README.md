@@ -358,6 +358,8 @@ cd book-parser
 ```
 
 ### 2. Instalacja zależności systemowych
+
+#### Zależności podstawowe:
 ```bash
 sudo apt update
 sudo apt install -y \
@@ -371,6 +373,17 @@ sudo apt install -y \
     python3 \
     python3-pip
 ```
+
+#### Zależności Python (wymagane dla EPUB parser i WebUI):
+```bash
+pip3 install --user \
+    ebooklib \
+    lxml \
+    flask \
+    flask-cors
+```
+
+> **Uwaga**: Jeśli napotkasz problemy z uprawnieniami, użyj flagi `--break-system-packages` lub rozważ użycie virtualenv.
 
 ### 3. Kompilacja narzędzi (chunker, ollama_expander, doc_generator, mempalace_client)
 ```bash
