@@ -25,6 +25,8 @@ LANGUAGE="pl"
 MAX_CHUNKS=5
 EXPAND=false
 CHECK_OLLAMA=false
+EPUB_INPUT_DIR="./epub_input"
+CONVERTED_DIR="./converted"
 
 print_help() {
     echo "=== Pipeline z Ekspansją Treści przez Ollama ==="
@@ -42,6 +44,9 @@ print_help() {
     echo "  --lang LANGUAGE       Język outputu (domyślnie: pl)"
     echo "  -n, --max-chunks N    Maksymalna liczba chunków do ekspansji (domyślnie: 5)"
     echo "  -e, --expand          Włącz ekspansję treści przez LLM"
+    echo "  --epub DIR            Katalog z plikami EPUB do konwersji (domyślnie: ./epub_input)"
+    echo "  --convert-dir DIR     Katalog na przekonwertowane pliki (domyślnie: ./converted)"
+    echo "  --epub-only           Tylko konwersja EPUB i zakończenie"
     echo "  --check               Sprawdź dostępność Ollama i zakończ"
     echo "  -h, --help            Wyświetl pomoc"
     echo ""
@@ -49,6 +54,8 @@ print_help() {
     echo "  $0 --check"
     echo "  $0 -i ./input -e -s creative -l long"
     echo "  $0 -e -m llama3.2 --lang en"
+    echo "  $0 --epub ./books --epub-only"
+    echo "  $0 --epub ./books -e"
 }
 
 # Parsowanie argumentów
@@ -92,6 +99,18 @@ while [[ $# -gt 0 ]]; do
             ;;
         -e|--expand)
             EXPAND=true
+            shift
+            ;;
+        --epub)
+            EPUB_INPUT_DIR="$2"
+            shift 2
+            ;;
+        --convert-dir)
+            CONVERTED_DIR="$2"
+            shift 2
+            ;;
+        --epub-only)
+            EPUB_ONLY=true
             shift
             ;;
         --check)
@@ -160,7 +179,31 @@ fi
 
 # Tworzenie katalogów
 echo -e "${YELLOW}Przygotowanie katalogów...${NC}"
-mkdir -p "$CHUNK_DIR" "$REWRITEN_DIR" "$OUTPUT_DIR"
+mkdir -p "$CHUNK_DIR" "$REWRITEN_DIR" "$OUTPUT_DIR" "$CONVERTED_DIR" "$EPUB_INPUT_DIR"
+
+# Konwersja EPUB (jeśli wskazano)
+if [[ -d "$EPUB_INPUT_DIR" ]] && [[ -n "$(ls -A "$EPUB_INPUT_DIR"/*.epub 2>/dev/null)" ]]; then
+    echo -e "${BLUE}=== KONWERSJA EPUB ===${NC}"
+    echo -e "${YELLOW}Wykryto pliki EPUB, uruchamianie konwersji...${NC}"
+    
+    python3 ./src/epub_parser.py "$EPUB_INPUT_DIR" -o "$CONVERTED_DIR" -f both -v
+    
+    # Kopiowanie przekonwertowanych plików do INPUT_DIR
+    if [[ -d "$CONVERTED_DIR" ]] && [[ -n "$(ls -A "$CONVERTED_DIR"/*.txt 2>/dev/null)" ]]; then
+        echo -e "${GREEN}✓ Kopiowanie przekonwertowanych plików do katalogu input...${NC}"
+        cp "$CONVERTED_DIR"/*.txt "$INPUT_DIR"/ 2>/dev/null || true
+        echo -e "${GREEN}✓ Konwersja EPUB zakończona${NC}"
+    fi
+    echo ""
+    
+    # Jeśli tylko EPUB, zakończ
+    if [[ "$EPUB_ONLY" == true ]]; then
+        echo -e "${GREEN}✓ Konwersja EPUB zakończona sukcesnie!${NC}"
+        echo -e "${YELLOW}Przekonwertowane pliki znajdują się w: $CONVERTED_DIR${NC}"
+        echo -e "${YELLOW}Pliki TXT zostały skopiowane do: $INPUT_DIR${NC}"
+        exit 0
+    fi
+fi
 
 # Kompilacja narzędzi
 echo -e "${YELLOW}Kompilacja narzędzi...${NC}"
