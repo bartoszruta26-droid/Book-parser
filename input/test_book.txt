@@ -1,0 +1,33 @@
+# Testowa Książka o AI
+
+Autor: Jan Testowy
+
+
+## Chapter 1
+
+Wstęp do Sztucznej Inteligencji
+Sztuczna inteligencja (AI) to dziedzina informatyki zajmująca się tworzeniem systemów zdolnych do wykonywania zadań wymagających ludzkiej inteligencji.
+Do takich zadań należą między innymi uczenie się, rozumowanie, percepcja i rozwiązywanie problemów.
+
+## Chapter 2
+
+Rozdział 1: Historia AI
+Historia sztucznej inteligencji rozpoczęła się w latach 50. XX wieku.
+Wczesne lata
+W 1950 roku Alan Turing opublikował przełomowy artykuł "Computing Machinery and Intelligence".
+Narodziny terminu
+Termin "sztuczna inteligencja" został coined w 1956 roku podczas konferencji w Dartmouth.
+
+## Chapter 3
+
+Rozdział 2: Uczenie Maszynowe
+Uczenie maszynowe to poddziedzina AI koncentrująca się na rozwoju algorytmów.
+Rodzaje uczenia
+Wyróżniamy uczenie nadzorowane, nienadzorowane i przez wzmacnianie.
+
+## Chapter 4
+
+Testowa Książka o AI
+Wstęp
+Rozdział 1
+Rozdział 2
