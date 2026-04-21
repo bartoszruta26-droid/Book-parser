@@ -1,10 +1,20 @@
 # Book-Parser Python Dependencies
 # Install with: pip3 install -r requirements.txt
 
-# EPUB Parser dependencies
-ebooklib>=0.18
-lxml>=4.9.0
 
 # WebUI dependencies
 flask>=2.3.0
 flask-cors>=4.0.0
+# Instalacja: pip install -r requirements.txt
+
+# EPUB Parser
+ebooklib>=0.18
+lxml>=5.0.0
+
+# Optional: Document processing
+# python-docx>=1.1.0
+# PyPDF2>=3.0.0
+
+# Optional: Utilities
+# requests>=2.31.0
+# tqdm>=4.66.0
