@@ -156,6 +156,8 @@ Głównym celem systemu jest:
   - `libreoffice` (konwersja formatów biurowych)
   - `poppler-utils` (parsowanie PDF)
   - `pandoc` (konwersja między formatami)
+  - `libcurl4-openssl-dev` (biblioteka HTTP dla mempalace_client)
+  - `nlohmann-json3-dev` (biblioteka JSON dla C++)
 
 ---
 
@@ -370,9 +372,13 @@ sudo apt install -y \
     pandoc \
     git \
     curl \
+    libcurl4-openssl-dev \
+    nlohmann-json3-dev \
     python3 \
     python3-pip
 ```
+
+> **Uwaga**: Pakiety `libcurl4-openssl-dev` i `nlohmann-json3-dev` są wymagane do kompilacji `mempalace_client`.
 
 #### Zależności Python (wymagane dla EPUB parser i WebUI):
 ```bash
