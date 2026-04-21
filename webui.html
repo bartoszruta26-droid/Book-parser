@@ -493,9 +493,20 @@
         </div>
     </div>
 
+
     <script>
-        // Symulacja działania - w produkcji tutaj byłoby API do backendu
+        // Konfiguracja API
+        const API_BASE = window.location.origin;
         
+        // Stan aplikacji
+        let appState = {
+            running: false,
+            progress: 0,
+            status: 'idle',
+            config: {}
+        };
+
+        // Funkcje pomocnicze
         function addLog(message, type = 'info') {
             const logsContainer = document.getElementById('logsContainer');
             const timestamp = new Date().toLocaleTimeString();
@@ -512,10 +523,16 @@
             progressFill.textContent = Math.round(percent) + '%';
         }
 
-        function startPipeline() {
-            addLog('Rozpoczynanie pipeline...', 'info');
-            
-            const config = {
+        function updateStatusCounts(pending, processing, completed, errors) {
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('processingCount').textContent = processing;
+            document.getElementById('completedCount').textContent = completed;
+            document.getElementById('errorCount').textContent = errors;
+        }
+
+        // Pobierz konfigurację z UI
+        function getConfigFromUI() {
+            return {
                 inputDir: document.getElementById('inputDir').value,
                 chunkDir: document.getElementById('chunkDir').value,
                 rewritenDir: document.getElementById('rewritenDir').value,
@@ -527,65 +544,220 @@
                 maxChunks: parseInt(document.getElementById('maxChunks').value),
                 expand: document.getElementById('expand').checked
             };
+        }
 
-            addLog(`Konfiguracja: model=${config.model}, styl=${config.style}`, 'debug');
-            addLog(`Ekspansja treści: ${config.expand ? 'włączona' : 'wyłączona'}`, 'info');
+        // Ustaw konfigurację w UI
+        function setConfigInUI(config) {
+            if (config.inputDir) document.getElementById('inputDir').value = config.inputDir;
+            if (config.chunkDir) document.getElementById('chunkDir').value = config.chunkDir;
+            if (config.rewritenDir) document.getElementById('rewritenDir').value = config.rewritenDir;
+            if (config.outputDir) document.getElementById('outputDir').value = config.outputDir;
+            if (config.model) document.getElementById('model').value = config.model;
+            if (config.style) document.getElementById('style').value = config.style;
+            if (config.length) document.getElementById('length').value = config.length;
+            if (config.language) document.getElementById('language').value = config.language;
+            if (config.maxChunks) document.getElementById('maxChunks').value = config.maxChunks;
+            if (config.expand !== undefined) document.getElementById('expand').checked = config.expand;
+        }
+
+        // Renderuj listę plików
+        function renderFileList(files) {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
             
-            // Symulacja postępu
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += Math.random() * 5;
-                if (progress >= 100) {
-                    progress = 100;
-                    clearInterval(interval);
-                    addLog('Pipeline zakończony sukcesem!', 'success');
-                    document.getElementById('completedCount').textContent = 
-                        parseInt(document.getElementById('completedCount').textContent) + 1;
-                } else {
-                    addLog(`Przetwarzanie... ${Math.round(progress)}%`, 'info');
+            if (!files || files.length === 0) {
+                fileList.innerHTML = '<div class="file-item"><div class="file-info"><div class="file-name">Brak plików do przetworzenia</div></div></div>';
+                return;
+            }
+            
+            files.forEach(file => {
+                const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+                const statusClass = `status-${file.status}`;
+                const statusText = {
+                    'pending': 'Oczekuje',
+                    'processing': 'Przetwarzanie',
+                    'completed': 'Zakończone',
+                    'error': 'Błąd'
+                }[file.status] || file.status;
+                
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-meta">${sizeMB} MB • Dodano: ${file.modified}</div>
+                    </div>
+                    <div class="file-status ${statusClass}">${statusText}</div>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        // Odśwież status
+        async function checkStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api/status`);
+                const data = await response.json();
+                
+                appState.running = data.running;
+                appState.progress = data.progress;
+                appState.status = data.status;
+                
+                updateProgress(data.progress);
+                updateStatusCounts(data.pending, data.processing, data.completed, data.errors);
+                renderFileList(data.files);
+                
+                // Dodaj nowe logi
+                if (data.logs && data.logs.length > 0) {
+                    const logsContainer = document.getElementById('logsContainer');
+                    logsContainer.innerHTML = '';
+                    data.logs.forEach(log => {
+                        addLog(log.message, log.level);
+                    });
                 }
-                updateProgress(progress);
-            }, 500);
+                
+            } catch (error) {
+                console.error('Błąd pobierania statusu:', error);
+            }
         }
 
-        function checkStatus() {
-            addLog('Sprawdzanie statusu...', 'info');
+        // Uruchom pipeline
+        async function startPipeline() {
+            const config = getConfigFromUI();
             
-            // Symulacja odświeżania statusu
-            setTimeout(() => {
-                document.getElementById('pendingCount').textContent = Math.floor(Math.random() * 5);
-                document.getElementById('processingCount').textContent = Math.floor(Math.random() * 3);
-                document.getElementById('errorCount').textContent = Math.floor(Math.random() * 2);
-                addLog('Status odświeżony', 'success');
-            }, 500);
-        }
-
-        function checkOllama() {
-            addLog('Sprawdzanie dostępności Ollama...', 'info');
-            
-            setTimeout(() => {
-                const isAvailable = Math.random() > 0.3;
-                if (isAvailable) {
-                    addLog('✅ Ollama jest dostępny! Model qwen2.5-coder:7b gotowy.', 'success');
+            try {
+                addLog('Wysyłanie konfiguracji...', 'info');
+                
+                // Najpierw zapisz konfigurację
+                await fetch(`${API_BASE}/api/config`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(config)
+                });
+                
+                addLog('Uruchamianie pipeline...', 'info');
+                addLog(`Konfiguracja: model=${config.model}, styl=${config.style}`, 'debug');
+                addLog(`Ekspansja treści: ${config.expand ? 'włączona' : 'wyłączona'}`, 'info');
+                
+                const response = await fetch(`${API_BASE}/api/start`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(config)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    addLog(`Pipeline uruchomiony! Plików do przetworzenia: ${result.files_count}`, 'success');
+                    checkStatus();
                 } else {
-                    addLog('❌ Nie można połączyć się z Ollama. Sprawdź czy usługa działa.', 'error');
+                    addLog(`Błąd: ${result.error}`, 'error');
                 }
-            }, 1000);
+            } catch (error) {
+                addLog(`Błąd uruchamiania: ${error.message}`, 'error');
+            }
         }
 
-        function stopPipeline() {
-            addLog('Zatrzymywanie pipeline...', 'warning');
-            updateProgress(0);
-            addLog('Pipeline zatrzymany przez użytkownika', 'warning');
+        // Zatrzymaj pipeline
+        async function stopPipeline() {
+            try {
+                addLog('Zatrzymywanie pipeline...', 'warning');
+                
+                const response = await fetch(`${API_BASE}/api/stop`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    addLog('Pipeline zatrzymany', 'success');
+                } else {
+                    addLog(result.error || 'Nie udało się zatrzymać', 'warning');
+                }
+                
+                updateProgress(0);
+                checkStatus();
+            } catch (error) {
+                addLog(`Błąd zatrzymywania: ${error.message}`, 'error');
+            }
         }
 
-        // Auto-refresh co 30 sekund
-        setInterval(checkStatus, 30000);
+        // Sprawdź Ollama
+        async function checkOllama() {
+            try {
+                addLog('Sprawdzanie dostępności Ollama...', 'info');
+                
+                const response = await fetch(`${API_BASE}/api/ollama/check`);
+                const result = await response.json();
+                
+                if (result.available) {
+                    if (result.models && result.models.length > 0) {
+                        addLog(`✅ Ollama jest dostępny! Modele: ${result.models.join(', ')}`, 'success');
+                    } else {
+                        addLog('✅ Ollama jest dostępny!', 'success');
+                    }
+                } else {
+                    addLog(`❌ Nie można połączyć się z Ollama: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addLog(`Błąd sprawdzania Ollama: ${error.message}`, 'error');
+            }
+        }
+
+        // Sprawdź katalogi
+        async function checkDirectories() {
+            try {
+                const response = await fetch(`${API_BASE}/api/directories`);
+                const dirs = await response.json();
+                
+                for (const [name, info] of Object.entries(dirs)) {
+                    if (info.exists) {
+                        addLog(`✅ Katalog ./${name} istnieje (${info.file_count} plików)`, 'success');
+                    } else {
+                        addLog(`⚠️ Katalog ./${name} nie istnieje`, 'warning');
+                    }
+                }
+            } catch (error) {
+                console.error('Błąd sprawdzania katalogów:', error);
+            }
+        }
+
+        // Auto-refresh co 5 sekund gdy pipeline działa
+        let autoRefreshInterval;
+        function startAutoRefresh() {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            autoRefreshInterval = setInterval(() => {
+                checkStatus();
+            }, 5000);
+        }
 
         // Inicjalizacja
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
             addLog('Web UI załadowany', 'success');
-            checkStatus();
+            addLog('Łączenie z serwerem...', 'info');
+            
+            try {
+                // Pobierz zapisaną konfigurację
+                const configResponse = await fetch(`${API_BASE}/api/config`);
+                const savedConfig = await configResponse.json();
+                if (savedConfig && Object.keys(savedConfig).length > 0) {
+                    setConfigInUI(savedConfig);
+                    addLog('Konfiguracja załadowana', 'success');
+                }
+                
+                // Sprawdź katalogi
+                checkDirectories();
+                
+                // Sprawdź status
+                checkStatus();
+                
+                // Uruchom auto-refresh
+                startAutoRefresh();
+                
+            } catch (error) {
+                addLog(`Błąd inicjalizacji: ${error.message}`, 'error');
+                addLog('Upewnij się, że serwer Python jest uruchomiony', 'warning');
+            }
         });
     </script>
 </body>
