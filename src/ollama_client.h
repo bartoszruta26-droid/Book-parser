@@ -23,7 +23,7 @@ struct OllamaConfig {
     std::string host = "localhost";
     int port = 11434;
     std::string model = "qwen2.5-coder:7b";
-    int timeout_seconds = 120;
+    int timeout_seconds = 600;  // 10 minut dla długich generowań (np. 13k znaków)
     int max_retries = 3;
     int retry_delay_ms = 2000;
     bool stream = false;
